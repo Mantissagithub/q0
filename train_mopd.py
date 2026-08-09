@@ -20,6 +20,9 @@ GRAD_CLIP = 1.0
 SNAPSHOT_COUNT = 8
 TEACHER_COUNT = 4
 EXPECTED_STEPS = TRAIN_TARGET // PROMPT_BATCH_SIZE
+VALIDATION_TARGET = 512
+VALIDATION_BATCH_SIZE = 64
+CANDIDATE_STEPS = (8, 16, 24, 32)
 
 
 def validate_mixture_manifest(q0_run_dir):
@@ -122,6 +125,54 @@ def atomic_jsonl_dump(rows, path):
             os.unlink(temporary_path)
 
 
+def load_validation_examples():
+    from datasets import load_dataset
+
+    dataset = load_dataset(tg.GSM8K_DATASET, "main", split="train").shuffle(seed=tg.GSM8K_SEED)
+    start = tg.GSM8K_HELD_OUT + tg.GSM8K_TRAIN_TARGET
+    examples = dataset.select(range(start, start + VALIDATION_TARGET))
+    if len(examples) != VALIDATION_TARGET:
+        raise ValueError(f"expected {VALIDATION_TARGET} validation examples, got {len(examples)}")
+    return list(examples)
+
+
+def checkpoint_state(model):
+    return {
+        key: value.detach().to(device="cpu", dtype=torch.bfloat16)
+        if value.is_floating_point() else value.detach().cpu()
+        for key, value in model.state_dict().items()
+    }
+
+
+def select_best_candidate(rows):
+    if not rows:
+        raise ValueError("at least one validation result is required")
+    return max(rows, key=lambda row: (row["exact_match"], row["parse_rate"], row["step"]))
+
+
+def evaluate_candidates(candidate_paths, tokenizer, validation_examples, args, device):
+    import eval as evaluation
+
+    rows = []
+    for step, path in candidate_paths:
+        model = tg.load_model_from_checkpoint(args.model_name, args.revision, path, device)
+        result = evaluation.evaluate_single_model(
+            model, tokenizer, validation_examples, VALIDATION_BATCH_SIZE,
+            args.max_new_tokens, device, source=path,
+        )
+        result["step"] = step
+        result["checkpoint"] = os.path.basename(path)
+        rows.append(result)
+        print(
+            f"validation step {step}: exact_match {result['exact_match']:.4f} "
+            f"parse_rate {result['parse_rate']:.4f}"
+        )
+        model = None
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+    return rows
+
+
 def build_arg_parser():
     parser = argparse.ArgumentParser(
         description="one-pass multi-teacher on-policy distillation on gsm8k"
@@ -154,10 +205,12 @@ def run_training(args):
     os.makedirs(run_dir, exist_ok=True)
 
     train_examples, _held_out = tg.load_gsm8k_splits(seed=tg.GSM8K_SEED, held_out=tg.GSM8K_HELD_OUT)
+    validation_examples = load_validation_examples()
     if len(train_examples) != TRAIN_TARGET:
         raise ValueError(f"expected {TRAIN_TARGET} training examples, got {len(train_examples)}")
     student, tokenizer = tg.build_model_and_tokenizer(args.model_name, args.revision, device)
     teachers = []
+    teacher = None
     try:
         for path in teacher_paths:
             teacher = tg.load_model_from_checkpoint(args.model_name, args.revision, path, device)
@@ -171,6 +224,7 @@ def run_training(args):
         metrics = []
         prompts_seen = 0
         completion_tokens_seen = 0
+        candidate_paths = []
 
         for step, batch in enumerate(tg.batched(shuffled, PROMPT_BATCH_SIZE), start=1):
             prompts = [tg.build_prompt(example["question"]) for example in batch]
@@ -216,24 +270,60 @@ def run_training(args):
                 "completion_tokens": completion_tokens_seen,
             })
             print(f"step {step}/{EXPECTED_STEPS} lr {lr:.3e} loss {step_loss.item():.4f}")
+            if step in CANDIDATE_STEPS:
+                candidate_path = os.path.join(run_dir, f"candidate_step{step:02d}.pt")
+                tg.atomic_torch_save(checkpoint_state(student), candidate_path)
+                candidate_paths.append((step, candidate_path))
+                print(f"saved validation candidate at step {step}")
 
         if prompts_seen != TRAIN_TARGET or len(metrics) != EXPECTED_STEPS:
             raise RuntimeError("mopd training count mismatch")
+        atomic_jsonl_dump(metrics, os.path.join(run_dir, "training_metrics.jsonl"))
+        optimizer = None
+        student = None
+        teachers.clear()
+        teacher = None
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+        validation_rows = evaluate_candidates(
+            candidate_paths, tokenizer, validation_examples, args, device,
+        )
+        best = select_best_candidate(validation_rows)
+        best_path = os.path.join(run_dir, best["checkpoint"])
         tg.atomic_torch_save(
-            {
-                key: value.detach().to(device="cpu", dtype=torch.bfloat16)
-                if value.is_floating_point() else value.detach().cpu()
-                for key, value in student.state_dict().items()
-            },
+            torch.load(best_path, map_location="cpu", weights_only=True),
             os.path.join(run_dir, "opsd.pt"),
         )
-        atomic_jsonl_dump(metrics, os.path.join(run_dir, "training_metrics.jsonl"))
-        print(f"mopd complete: {prompts_seen} prompts, {completion_tokens_seen} completion tokens")
+        tg.atomic_json_dump(
+            {
+                "validation_source": "fresh deterministic slice from the unused gsm8k train remainder",
+                "validation_count": VALIDATION_TARGET,
+                "selection_order": ["exact_match", "parse_rate", "later_step"],
+                "selected_step": best["step"],
+                "selected_checkpoint": best["checkpoint"],
+                "candidates": validation_rows,
+            },
+            os.path.join(run_dir, "validation_results.json"),
+        )
+        print(
+            f"mopd complete: selected step {best['step']} after {prompts_seen} prompts "
+            f"and {completion_tokens_seen} completion tokens"
+        )
     finally:
         teachers.clear()
 
 
 def self_test():
+    assert CANDIDATE_STEPS == (8, 16, 24, EXPECTED_STEPS)
+    candidates = [
+        {"step": 8, "exact_match": 0.2, "parse_rate": 0.9},
+        {"step": 16, "exact_match": 0.3, "parse_rate": 0.7},
+        {"step": 24, "exact_match": 0.3, "parse_rate": 0.8},
+        {"step": 32, "exact_match": 0.3, "parse_rate": 0.8},
+    ]
+    assert select_best_candidate(candidates)["step"] == 32
+
     teacher_a = torch.tensor([[[1.0, -1.0], [0.0, 2.0]]])
     teacher_b = teacher_a.clone()
     student = teacher_a.clone().requires_grad_(True)
