@@ -306,6 +306,16 @@ def fingerprint_file(path, base_dir):
     }
 
 
+def fingerprint_file_with_sha256(path, base_dir):
+    fingerprint = fingerprint_file(path, base_dir)
+    digest = hashlib.sha256()
+    with open(path, "rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    fingerprint["sha256"] = digest.hexdigest()
+    return fingerprint
+
+
 def make_source_fingerprint(baseline_paths, q0_paths, mixture_path, snapshot_names, weights, args,
                             mopd_path=None):
     with open(mixture_path, "rb") as f:
@@ -370,7 +380,62 @@ def save_result(output_path, metadata, results, key, value):
     write_results_atomic(output_path, metadata, results)
 
 
+def load_mopd_merge_results(args, test_count, mopd_path):
+    if not os.path.isfile(args.output):
+        raise FileNotFoundError(f"mopd-only evaluation requires existing results: {args.output}")
+    with open(args.output) as handle:
+        saved = json.load(handle)
+    metadata = saved.get("metadata") if isinstance(saved, dict) else None
+    results = saved.get("results") if isinstance(saved, dict) else None
+    if not isinstance(metadata, dict) or not isinstance(results, dict):
+        raise ValueError("existing evaluation output must contain metadata and results objects")
+    expected = {
+        "model_name": args.model_name,
+        "model_revision": args.revision,
+        "test_count": test_count,
+        "max_new_tokens": args.max_new_tokens,
+        "batch_size": args.batch_size,
+    }
+    for key, value in expected.items():
+        if metadata.get(key) != value:
+            raise ValueError(f"mopd-only evaluation has incompatible metadata field {key}")
+    if not isinstance(metadata.get("source_fingerprint"), dict):
+        raise ValueError("existing evaluation metadata is missing its source fingerprint")
+    fingerprint = fingerprint_file_with_sha256(mopd_path, args.mopd_run_dir)
+    return metadata, results, fingerprint
+
+
+def run_mopd_only_eval(args):
+    mopd_path = validate_mopd_checkpoint(args)
+    if mopd_path is None:
+        raise ValueError("--mopd-only requires --mopd-run-dir")
+    device = args.device
+    tokenizer = tg.load_tokenizer(args.model_name, args.revision)
+    test_set = load_test_set()
+    metadata, results, fingerprint = load_mopd_merge_results(args, len(test_set), mopd_path)
+    previous = metadata["source_fingerprint"].get("mopd_file")
+    if "mopd" in results and previous == fingerprint:
+        print(f"mopd result already matches {mopd_path}; nothing to evaluate")
+        return
+
+    model = tg.load_model_from_checkpoint(args.model_name, args.revision, mopd_path, device)
+    value = evaluate_single_model(
+        model, tokenizer, test_set, args.batch_size, args.max_new_tokens, device, source=mopd_path,
+    )
+    value["checkpoint_sha256"] = fingerprint["sha256"]
+    model = None
+    if device == "cuda":
+        torch.cuda.empty_cache()
+    metadata["source_fingerprint"]["mopd_file"] = fingerprint
+    metadata["mopd_evaluated_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    save_result(args.output, metadata, results, "mopd", value)
+    print(f"merged mopd result into {args.output}; kept {len(results) - 1} existing results")
+
+
 def run_eval(args):
+    if args.mopd_only:
+        run_mopd_only_eval(args)
+        return
     baseline_paths, q0_paths, mixture_path, snapshot_names, weights = validate_checkpoint_inputs(args)
     mopd_path = validate_mopd_checkpoint(args)
     source_fingerprint = make_source_fingerprint(
@@ -479,6 +544,7 @@ def build_arg_parser():
     parser.add_argument("--max-new-tokens", type=int, default=tg.MAX_NEW_TOKENS)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--mopd-only", action="store_true")
     parser.add_argument(
         "--self-test", action="store_true",
         help="run offline self-tests only, no network, model download, or gpu needed",
@@ -557,6 +623,20 @@ def self_test():
             test_args, 3, fingerprint, timestamp="2026-08-09T00:00:00Z",
         )
         write_results_atomic(output_path, metadata, {"base": {"exact_match": 0.0}})
+        mopd_path = os.path.join(source_dir, "opsd.pt")
+        with open(mopd_path, "wb") as f:
+            f.write(b"mopd")
+        test_args.mopd_run_dir = source_dir
+        merged_metadata, merged_results, mopd_fingerprint = load_mopd_merge_results(
+            test_args, 3, mopd_path,
+        )
+        assert merged_metadata == metadata
+        assert set(merged_results) == {"base"}
+        assert len(mopd_fingerprint["sha256"]) == 64
+        with open(mopd_path, "wb") as f:
+            f.write(b"changed-mopd")
+        changed_mopd_fingerprint = fingerprint_file_with_sha256(mopd_path, source_dir)
+        assert changed_mopd_fingerprint["sha256"] != mopd_fingerprint["sha256"]
         resumed_metadata, resumed_results = load_resume_results(test_args, 3, fingerprint)
         assert resumed_metadata == metadata
         assert "base" in resumed_results
