@@ -474,6 +474,44 @@ def load_mopd_merge_results(args, test_count, mopd_path):
     return metadata, results, fingerprint
 
 
+def best_existing_checkpoint(results, prefix):
+    candidates = [
+        (key, value) for key, value in results.items()
+        if key.startswith(prefix) and isinstance(value, dict) and "exact_match" in value
+    ]
+    if not candidates:
+        raise ValueError(f"existing evaluation results contain no {prefix} checkpoints")
+    return max(candidates, key=lambda item: item[1]["exact_match"])[0]
+
+
+def evaluate_winner_pass_at_k(args, metadata, results, tokenizer, test_set, device):
+    winners = [
+        (best_existing_checkpoint(results, "baseline_pass_"), args.baseline_run_dir, "baseline_"),
+        (best_existing_checkpoint(results, "q0_traj"), args.q0_run_dir, "q0_"),
+    ]
+    fingerprints = metadata["source_fingerprint"].setdefault("pass_at_k_winner_files", {})
+    for key, run_dir, key_prefix in winners:
+        filename = key[len(key_prefix):]
+        path = os.path.join(run_dir, filename)
+        if not os.path.isfile(path):
+            raise ValueError(f"missing best-checkpoint file for pass@k evaluation: {path}")
+        fingerprint = fingerprint_file_with_sha256(path, run_dir)
+        if results[key].get("pass_at_8") is not None and fingerprints.get(key) == fingerprint:
+            print(f"pass@k result already matches {path}; skipping")
+            continue
+        model = tg.load_model_from_checkpoint(args.model_name, args.revision, path, device)
+        results[key].update(evaluate_pass_at_k(
+            model, tokenizer, test_set, args.batch_size, args.max_new_tokens, device, source=path,
+        ))
+        results[key]["pass_at_k_checkpoint_sha256"] = fingerprint["sha256"]
+        fingerprints[key] = fingerprint
+        model = None
+        if device == "cuda":
+            torch.cuda.empty_cache()
+        write_results_atomic(args.output, metadata, results)
+        print(f"merged pass@k result for {key}")
+
+
 def run_mopd_only_eval(args):
     mopd_path = validate_mopd_checkpoint(args)
     if mopd_path is None:
@@ -485,23 +523,24 @@ def run_mopd_only_eval(args):
     previous = metadata["source_fingerprint"].get("mopd_file")
     if "mopd" in results and previous == fingerprint:
         print(f"mopd result already matches {mopd_path}; nothing to evaluate")
-        return
-
-    model = tg.load_model_from_checkpoint(args.model_name, args.revision, mopd_path, device)
-    value = evaluate_single_model(
-        model, tokenizer, test_set, args.batch_size, args.max_new_tokens, device, source=mopd_path,
-    )
-    value.update(evaluate_pass_at_k(
-        model, tokenizer, test_set, args.batch_size, args.max_new_tokens, device, source=mopd_path,
-    ))
-    value["checkpoint_sha256"] = fingerprint["sha256"]
-    model = None
-    if device == "cuda":
-        torch.cuda.empty_cache()
-    metadata["source_fingerprint"]["mopd_file"] = fingerprint
-    metadata["mopd_evaluated_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    save_result(args.output, metadata, results, "mopd", value)
-    print(f"merged mopd result into {args.output}; kept {len(results) - 1} existing results")
+    else:
+        model = tg.load_model_from_checkpoint(args.model_name, args.revision, mopd_path, device)
+        value = evaluate_single_model(
+            model, tokenizer, test_set, args.batch_size, args.max_new_tokens, device, source=mopd_path,
+        )
+        value.update(evaluate_pass_at_k(
+            model, tokenizer, test_set, args.batch_size, args.max_new_tokens, device, source=mopd_path,
+        ))
+        value["checkpoint_sha256"] = fingerprint["sha256"]
+        model = None
+        if device == "cuda":
+            torch.cuda.empty_cache()
+        metadata["source_fingerprint"]["mopd_file"] = fingerprint
+        metadata["mopd_evaluated_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        save_result(args.output, metadata, results, "mopd", value)
+        print(f"merged mopd result into {args.output}; kept {len(results) - 1} existing results")
+    if args.compare_winners:
+        evaluate_winner_pass_at_k(args, metadata, results, tokenizer, test_set, device)
 
 
 def run_eval(args):
@@ -617,6 +656,7 @@ def build_arg_parser():
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--mopd-only", action="store_true")
+    parser.add_argument("--compare-winners", action="store_true")
     parser.add_argument(
         "--self-test", action="store_true",
         help="run offline self-tests only, no network, model download, or gpu needed",
@@ -632,6 +672,13 @@ def self_test():
     assert abs(pass_at_k_estimate(8, 1, 1) - 0.125) < 1e-12
     assert pass_at_k_estimate(8, 1, 8) == 1.0
     assert pass_at_k_estimate(8, 8, 4) == 1.0
+    existing = {
+        "baseline_pass_01.pt": {"exact_match": 0.1},
+        "baseline_pass_02.pt": {"exact_match": 0.2},
+        "q0_traj1_cycle01.pt": {"exact_match": 0.3},
+    }
+    assert best_existing_checkpoint(existing, "baseline_pass_") == "baseline_pass_02.pt"
+    assert best_existing_checkpoint(existing, "q0_traj") == "q0_traj1_cycle01.pt"
     try:
         pass_at_k_estimate(8, 1, 9)
     except ValueError:
