@@ -23,6 +23,8 @@ MATH_PROMPT = (
     "Solve the math problem below. Give a short chain of reasoning, then finish "
     "with the final answer wrapped exactly as <answer>$\\boxed{{answer}}$</answer>. "
     "The answer may be a number, expression, tuple, interval, or short piece of text.\n\n"
+    "Problem: What is 2 + 3?\n"
+    "Reasoning: 2 + 3 = 5. <answer>$\\boxed{{5}}$</answer>\n\n"
     "Problem: {problem}\nReasoning:"
 )
 
@@ -42,7 +44,8 @@ def extract_answer(text):
 def score_answer(text, gold):
     from math_verify import ExprExtractionConfig, LatexExtractionConfig, parse, verify
 
-    answer = extract_answer(text)
+    tagged_answer = extract_answer(text)
+    answer = tagged_answer or text.strip() or None
     if answer is None:
         return False, False, None
     gold_parsed = parse(
@@ -349,10 +352,12 @@ def build_arg_parser():
 def self_test():
     prompt = build_prompt("solve x + 1 = 2")
     assert "<answer>$\\boxed{answer}$</answer>" in prompt
+    assert "<answer>$\\boxed{5}$</answer>" in prompt
     assert "solve x + 1 = 2" in prompt
     assert extract_answer("work <answer>$\\boxed{14/3}$</answer>") == "$\\boxed{14/3}$"
     assert extract_answer("no answer") is None
     assert score_answer("<answer>$\\boxed{14/3}$</answer>", "\\frac{14}{3}")[:2] == (True, True)
+    assert score_answer("the answer is $\\boxed{14/3}$", "\\frac{14}{3}")[:2] == (True, True)
     assert score_answer("<answer>$\\boxed{p-q}$</answer>", "p - q")[:2] == (True, True)
     assert score_answer("<answer>$\\boxed{7}$</answer>", "8")[:2] == (False, True)
     counts = summarize_breakdown({"algebra": [2, 4]})
