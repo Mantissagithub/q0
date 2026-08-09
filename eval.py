@@ -26,6 +26,7 @@ UNIFORM_K_VALUES = [2, 4, 8]
 BASELINE_CHECKPOINT_COUNT = 4
 # full-run q0_snapshot_count = 16
 Q0_SNAPSHOT_COUNT = 8
+PASS_K_VALUES = (1, 4, 8)
 
 
 def load_test_set():
@@ -39,6 +40,19 @@ def score_completion(text, gold_value):
     pred, has_tag = tg.parse_answer(text)
     correct = pred is not None and gold_value is not None and abs(pred - gold_value) < 1e-6
     return correct, has_tag
+
+
+def pass_at_k_estimate(sample_count, correct_count, k):
+    if not 1 <= k <= sample_count:
+        raise ValueError("k must be between 1 and the sample count")
+    if correct_count <= 0:
+        return 0.0
+    if sample_count - correct_count < k:
+        return 1.0
+    miss = 1.0
+    for index in range(k):
+        miss *= (sample_count - correct_count - index) / (sample_count - index)
+    return 1.0 - miss
 
 
 def mix_probabilities(logits_list, weights):
@@ -196,6 +210,61 @@ def evaluate_single_model(model, tokenizer, test_set, batch_size, max_new_tokens
         "peak_memory_bytes": peak_mem,
         "source": source,
     }
+
+
+@torch.no_grad()
+def evaluate_pass_at_k(model, tokenizer, test_set, batch_size, max_new_tokens, device, source):
+    if device == "cuda":
+        torch.cuda.reset_peak_memory_stats(device)
+    tg.set_seed(tg.GSM8K_SEED)
+    sample_count = max(PASS_K_VALUES)
+    pass_totals = {k: 0.0 for k in PASS_K_VALUES}
+    parse_totals = {k: 0.0 for k in PASS_K_VALUES}
+    total_len = 0
+    t0 = time.time()
+
+    for start in range(0, len(test_set), batch_size):
+        batch = test_set[start:start + batch_size]
+        prompts = [tg.build_prompt(example["question"]) for example in batch]
+        golds = [tg.gsm8k_gold_answer(example["answer"]) for example in batch]
+        enc = tokenize_left_padded(tokenizer, prompts, device)
+        out = model.generate(
+            **enc, do_sample=True, temperature=tg.TEMPERATURE, top_p=tg.TOP_P,
+            max_new_tokens=max_new_tokens, num_return_sequences=sample_count,
+            pad_token_id=tokenizer.pad_token_id, stop_strings=[tg.ANSWER_STOP_STRING],
+            tokenizer=tokenizer, use_cache=True,
+        )
+        completion_ids = out[:, enc["input_ids"].shape[1]:]
+        texts = tokenizer.batch_decode(completion_ids, skip_special_tokens=True)
+        for index, gold in enumerate(golds):
+            samples = texts[index * sample_count:(index + 1) * sample_count]
+            scores = [score_completion(text, gold) for text in samples]
+            correct_count = sum(int(correct) for correct, _ in scores)
+            parsed_count = sum(int(parsed) for _, parsed in scores)
+            for k in PASS_K_VALUES:
+                pass_totals[k] += pass_at_k_estimate(sample_count, correct_count, k)
+                parse_totals[k] += pass_at_k_estimate(sample_count, parsed_count, k)
+            total_len += sum(
+                len(tokenizer(text, add_special_tokens=False)["input_ids"]) for text in samples
+            )
+
+    elapsed = time.time() - t0
+    count = len(test_set)
+    result = {
+        f"pass_at_{k}": pass_totals[k] / count for k in PASS_K_VALUES
+    }
+    result.update({f"parse_at_{k}": parse_totals[k] / count for k in PASS_K_VALUES})
+    result.update({
+        "samples_per_problem": sample_count,
+        "avg_sample_response_length": total_len / (count * sample_count),
+        "pass_at_k_timing_seconds": elapsed,
+        "pass_at_k_peak_memory_bytes": (
+            torch.cuda.max_memory_allocated(device) if device == "cuda" else 0
+        ),
+        "pass_at_k_seed": tg.GSM8K_SEED,
+        "pass_at_k_source": source,
+    })
+    return result
 
 
 @torch.no_grad()
@@ -422,6 +491,9 @@ def run_mopd_only_eval(args):
     value = evaluate_single_model(
         model, tokenizer, test_set, args.batch_size, args.max_new_tokens, device, source=mopd_path,
     )
+    value.update(evaluate_pass_at_k(
+        model, tokenizer, test_set, args.batch_size, args.max_new_tokens, device, source=mopd_path,
+    ))
     value["checkpoint_sha256"] = fingerprint["sha256"]
     model = None
     if device == "cuda":
@@ -554,6 +626,18 @@ def build_arg_parser():
 
 def self_test():
     print("running eval self-test...")
+
+    assert PASS_K_VALUES == (1, 4, 8)
+    assert pass_at_k_estimate(8, 0, 4) == 0.0
+    assert abs(pass_at_k_estimate(8, 1, 1) - 0.125) < 1e-12
+    assert pass_at_k_estimate(8, 1, 8) == 1.0
+    assert pass_at_k_estimate(8, 8, 4) == 1.0
+    try:
+        pass_at_k_estimate(8, 1, 9)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("pass@k must reject k above the sample count")
 
     correct, has_tag = score_completion("reasoning <answer>18</answer>", 18.0)
     assert correct and has_tag

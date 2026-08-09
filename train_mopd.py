@@ -147,7 +147,9 @@ def checkpoint_state(model):
 def select_best_candidate(rows):
     if not rows:
         raise ValueError("at least one validation result is required")
-    return max(rows, key=lambda row: (row["exact_match"], row["parse_rate"], row["step"]))
+    return max(rows, key=lambda row: (
+        row["pass_at_8"], row["pass_at_4"], row["pass_at_1"], row["parse_at_8"], row["step"],
+    ))
 
 
 def evaluate_candidates(candidate_paths, tokenizer, validation_examples, args, device):
@@ -156,7 +158,7 @@ def evaluate_candidates(candidate_paths, tokenizer, validation_examples, args, d
     rows = []
     for step, path in candidate_paths:
         model = tg.load_model_from_checkpoint(args.model_name, args.revision, path, device)
-        result = evaluation.evaluate_single_model(
+        result = evaluation.evaluate_pass_at_k(
             model, tokenizer, validation_examples, VALIDATION_BATCH_SIZE,
             args.max_new_tokens, device, source=path,
         )
@@ -164,13 +166,34 @@ def evaluate_candidates(candidate_paths, tokenizer, validation_examples, args, d
         result["checkpoint"] = os.path.basename(path)
         rows.append(result)
         print(
-            f"validation step {step}: exact_match {result['exact_match']:.4f} "
-            f"parse_rate {result['parse_rate']:.4f}"
+            f"validation step {step}: pass@1 {result['pass_at_1']:.4f} "
+            f"pass@4 {result['pass_at_4']:.4f} pass@8 {result['pass_at_8']:.4f}"
         )
         model = None
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
     return rows
+
+
+def save_selected_candidate(run_dir, validation_rows):
+    best = select_best_candidate(validation_rows)
+    best_path = os.path.join(run_dir, best["checkpoint"])
+    tg.atomic_torch_save(
+        torch.load(best_path, map_location="cpu", weights_only=True),
+        os.path.join(run_dir, "opsd.pt"),
+    )
+    tg.atomic_json_dump(
+        {
+            "validation_source": "fresh deterministic slice from the unused gsm8k train remainder",
+            "validation_count": VALIDATION_TARGET,
+            "selection_order": ["pass_at_8", "pass_at_4", "pass_at_1", "parse_at_8", "later_step"],
+            "selected_step": best["step"],
+            "selected_checkpoint": best["checkpoint"],
+            "candidates": validation_rows,
+        },
+        os.path.join(run_dir, "validation_results.json"),
+    )
+    return best
 
 
 def build_arg_parser():
@@ -192,6 +215,7 @@ def build_arg_parser():
     parser.add_argument("--lr", type=float, default=PEAK_LR)
     parser.add_argument("--weight-decay", type=float, default=WEIGHT_DECAY)
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--select-only", action="store_true")
     parser.add_argument("--self-test", action="store_true")
     return parser
 
@@ -289,23 +313,7 @@ def run_training(args):
         validation_rows = evaluate_candidates(
             candidate_paths, tokenizer, validation_examples, args, device,
         )
-        best = select_best_candidate(validation_rows)
-        best_path = os.path.join(run_dir, best["checkpoint"])
-        tg.atomic_torch_save(
-            torch.load(best_path, map_location="cpu", weights_only=True),
-            os.path.join(run_dir, "opsd.pt"),
-        )
-        tg.atomic_json_dump(
-            {
-                "validation_source": "fresh deterministic slice from the unused gsm8k train remainder",
-                "validation_count": VALIDATION_TARGET,
-                "selection_order": ["exact_match", "parse_rate", "later_step"],
-                "selected_step": best["step"],
-                "selected_checkpoint": best["checkpoint"],
-                "candidates": validation_rows,
-            },
-            os.path.join(run_dir, "validation_results.json"),
-        )
+        best = save_selected_candidate(run_dir, validation_rows)
         print(
             f"mopd complete: selected step {best['step']} after {prompts_seen} prompts "
             f"and {completion_tokens_seen} completion tokens"
@@ -314,13 +322,31 @@ def run_training(args):
         teachers.clear()
 
 
+def run_selection(args):
+    validate_config(args, torch.cuda.is_available())
+    tg.set_seed(tg.GSM8K_SEED)
+    run_dir = os.path.join(args.output_dir, args.run_id)
+    candidate_paths = [
+        (step, os.path.join(run_dir, f"candidate_step{step:02d}.pt"))
+        for step in CANDIDATE_STEPS
+    ]
+    missing = [path for _, path in candidate_paths if not os.path.isfile(path)]
+    if missing:
+        raise ValueError(f"missing validation candidates: {missing}")
+    tokenizer = tg.load_tokenizer(args.model_name, args.revision)
+    validation_examples = load_validation_examples()
+    rows = evaluate_candidates(candidate_paths, tokenizer, validation_examples, args, args.device)
+    best = save_selected_candidate(run_dir, rows)
+    print(f"pass@k selection complete: selected step {best['step']}")
+
+
 def self_test():
     assert CANDIDATE_STEPS == (8, 16, 24, EXPECTED_STEPS)
     candidates = [
-        {"step": 8, "exact_match": 0.2, "parse_rate": 0.9},
-        {"step": 16, "exact_match": 0.3, "parse_rate": 0.7},
-        {"step": 24, "exact_match": 0.3, "parse_rate": 0.8},
-        {"step": 32, "exact_match": 0.3, "parse_rate": 0.8},
+        {"step": 8, "pass_at_8": 0.4, "pass_at_4": 0.3, "pass_at_1": 0.1, "parse_at_8": 0.8},
+        {"step": 16, "pass_at_8": 0.5, "pass_at_4": 0.2, "pass_at_1": 0.1, "parse_at_8": 0.7},
+        {"step": 24, "pass_at_8": 0.5, "pass_at_4": 0.3, "pass_at_1": 0.1, "parse_at_8": 0.8},
+        {"step": 32, "pass_at_8": 0.5, "pass_at_4": 0.3, "pass_at_1": 0.1, "parse_at_8": 0.8},
     ]
     assert select_best_candidate(candidates)["step"] == 32
 
@@ -383,6 +409,8 @@ def main():
     args = build_arg_parser().parse_args()
     if args.self_test:
         self_test()
+    elif args.select_only:
+        run_selection(args)
     else:
         run_training(args)
 
