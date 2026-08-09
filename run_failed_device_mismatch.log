@@ -1,0 +1,189 @@
+run_all: starting baseline grpo training
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+Loading weights:   0%|          | 0/272 [00:00<?, ?it/s]Loading weights: 100%|██████████| 272/272 [00:00<00:00, 4313.84it/s]
+pass 1/4 step 1/128 lr 5.000e-06 reward 0.045
+pass 1/4 step 2/128 lr 4.999e-06 reward 0.045
+pass 1/4 step 3/128 lr 4.997e-06 reward 0.031
+pass 1/4 step 4/128 lr 4.993e-06 reward 0.045
+pass 1/4 step 5/128 lr 4.988e-06 reward 0.036
+pass 1/4 step 6/128 lr 4.981e-06 reward 0.034
+pass 1/4 step 7/128 lr 4.973e-06 reward 0.033
+pass 1/4 step 8/128 lr 4.963e-06 reward 0.054
+pass 1/4 step 9/128 lr 4.951e-06 reward 0.038
+pass 1/4 step 10/128 lr 4.938e-06 reward 0.039
+pass 1/4 step 11/128 lr 4.924e-06 reward 0.036
+pass 1/4 step 12/128 lr 4.908e-06 reward 0.041
+pass 1/4 step 13/128 lr 4.891e-06 reward 0.039
+pass 1/4 step 14/128 lr 4.872e-06 reward 0.039
+pass 1/4 step 15/128 lr 4.852e-06 reward 0.041
+pass 1/4 step 16/128 lr 4.830e-06 reward 0.044
+pass 1/4 step 17/128 lr 4.807e-06 reward 0.038
+pass 1/4 step 18/128 lr 4.782e-06 reward 0.041
+pass 1/4 step 19/128 lr 4.756e-06 reward 0.038
+pass 1/4 step 20/128 lr 4.729e-06 reward 0.041
+pass 1/4 step 21/128 lr 4.700e-06 reward 0.038
+pass 1/4 step 22/128 lr 4.670e-06 reward 0.053
+pass 1/4 step 23/128 lr 4.639e-06 reward 0.033
+pass 1/4 step 24/128 lr 4.606e-06 reward 0.036
+pass 1/4 step 25/128 lr 4.572e-06 reward 0.043
+pass 1/4 step 26/128 lr 4.537e-06 reward 0.048
+pass 1/4 step 27/128 lr 4.501e-06 reward 0.035
+pass 1/4 step 28/128 lr 4.463e-06 reward 0.045
+pass 1/4 step 29/128 lr 4.424e-06 reward 0.032
+pass 1/4 step 30/128 lr 4.384e-06 reward 0.036
+pass 1/4 step 31/128 lr 4.343e-06 reward 0.040
+pass 1/4 step 32/128 lr 4.300e-06 reward 0.047
+saved pass 1 checkpoint to runs/grpo_baseline/pass_01.pt
+pass 2/4 step 33/128 lr 4.257e-06 reward 0.060
+pass 2/4 step 34/128 lr 4.212e-06 reward 0.041
+pass 2/4 step 35/128 lr 4.167e-06 reward 0.071
+pass 2/4 step 36/128 lr 4.120e-06 reward 0.050
+pass 2/4 step 37/128 lr 4.072e-06 reward 0.032
+pass 2/4 step 38/128 lr 4.024e-06 reward 0.049
+pass 2/4 step 39/128 lr 3.974e-06 reward 0.040
+pass 2/4 step 40/128 lr 3.924e-06 reward 0.042
+pass 2/4 step 41/128 lr 3.873e-06 reward 0.052
+pass 2/4 step 42/128 lr 3.821e-06 reward 0.033
+pass 2/4 step 43/128 lr 3.768e-06 reward 0.048
+pass 2/4 step 44/128 lr 3.714e-06 reward 0.030
+pass 2/4 step 45/128 lr 3.660e-06 reward 0.031
+pass 2/4 step 46/128 lr 3.605e-06 reward 0.041
+pass 2/4 step 47/128 lr 3.549e-06 reward 0.054
+pass 2/4 step 48/128 lr 3.492e-06 reward 0.037
+pass 2/4 step 49/128 lr 3.435e-06 reward 0.048
+pass 2/4 step 50/128 lr 3.378e-06 reward 0.042
+pass 2/4 step 51/128 lr 3.319e-06 reward 0.064
+pass 2/4 step 52/128 lr 3.261e-06 reward 0.045
+pass 2/4 step 53/128 lr 3.202e-06 reward 0.056
+pass 2/4 step 54/128 lr 3.142e-06 reward 0.050
+pass 2/4 step 55/128 lr 3.082e-06 reward 0.035
+pass 2/4 step 56/128 lr 3.022e-06 reward 0.042
+pass 2/4 step 57/128 lr 2.961e-06 reward 0.050
+pass 2/4 step 58/128 lr 2.900e-06 reward 0.038
+pass 2/4 step 59/128 lr 2.839e-06 reward 0.043
+pass 2/4 step 60/128 lr 2.778e-06 reward 0.037
+pass 2/4 step 61/128 lr 2.716e-06 reward 0.050
+pass 2/4 step 62/128 lr 2.655e-06 reward 0.050
+pass 2/4 step 63/128 lr 2.593e-06 reward 0.040
+pass 2/4 step 64/128 lr 2.531e-06 reward 0.043
+saved pass 2 checkpoint to runs/grpo_baseline/pass_02.pt
+pass 3/4 step 65/128 lr 2.469e-06 reward 0.049
+pass 3/4 step 66/128 lr 2.407e-06 reward 0.047
+pass 3/4 step 67/128 lr 2.345e-06 reward 0.045
+pass 3/4 step 68/128 lr 2.284e-06 reward 0.056
+pass 3/4 step 69/128 lr 2.222e-06 reward 0.039
+pass 3/4 step 70/128 lr 2.161e-06 reward 0.044
+pass 3/4 step 71/128 lr 2.100e-06 reward 0.045
+pass 3/4 step 72/128 lr 2.039e-06 reward 0.044
+pass 3/4 step 73/128 lr 1.978e-06 reward 0.038
+pass 3/4 step 74/128 lr 1.918e-06 reward 0.048
+pass 3/4 step 75/128 lr 1.858e-06 reward 0.061
+pass 3/4 step 76/128 lr 1.798e-06 reward 0.061
+pass 3/4 step 77/128 lr 1.739e-06 reward 0.050
+pass 3/4 step 78/128 lr 1.681e-06 reward 0.046
+pass 3/4 step 79/128 lr 1.622e-06 reward 0.052
+pass 3/4 step 80/128 lr 1.565e-06 reward 0.043
+pass 3/4 step 81/128 lr 1.508e-06 reward 0.045
+pass 3/4 step 82/128 lr 1.451e-06 reward 0.041
+pass 3/4 step 83/128 lr 1.395e-06 reward 0.048
+pass 3/4 step 84/128 lr 1.340e-06 reward 0.044
+pass 3/4 step 85/128 lr 1.286e-06 reward 0.043
+pass 3/4 step 86/128 lr 1.232e-06 reward 0.046
+pass 3/4 step 87/128 lr 1.179e-06 reward 0.053
+pass 3/4 step 88/128 lr 1.127e-06 reward 0.051
+pass 3/4 step 89/128 lr 1.076e-06 reward 0.039
+pass 3/4 step 90/128 lr 1.026e-06 reward 0.039
+pass 3/4 step 91/128 lr 9.761e-07 reward 0.054
+pass 3/4 step 92/128 lr 9.275e-07 reward 0.052
+pass 3/4 step 93/128 lr 8.799e-07 reward 0.054
+pass 3/4 step 94/128 lr 8.333e-07 reward 0.056
+pass 3/4 step 95/128 lr 7.877e-07 reward 0.045
+pass 3/4 step 96/128 lr 7.432e-07 reward 0.054
+saved pass 3 checkpoint to runs/grpo_baseline/pass_03.pt
+pass 4/4 step 97/128 lr 6.997e-07 reward 0.044
+pass 4/4 step 98/128 lr 6.574e-07 reward 0.048
+pass 4/4 step 99/128 lr 6.162e-07 reward 0.058
+pass 4/4 step 100/128 lr 5.761e-07 reward 0.038
+pass 4/4 step 101/128 lr 5.372e-07 reward 0.048
+pass 4/4 step 102/128 lr 4.995e-07 reward 0.046
+pass 4/4 step 103/128 lr 4.630e-07 reward 0.057
+pass 4/4 step 104/128 lr 4.278e-07 reward 0.048
+pass 4/4 step 105/128 lr 3.938e-07 reward 0.056
+pass 4/4 step 106/128 lr 3.612e-07 reward 0.051
+pass 4/4 step 107/128 lr 3.298e-07 reward 0.048
+pass 4/4 step 108/128 lr 2.998e-07 reward 0.042
+pass 4/4 step 109/128 lr 2.711e-07 reward 0.046
+pass 4/4 step 110/128 lr 2.438e-07 reward 0.054
+pass 4/4 step 111/128 lr 2.178e-07 reward 0.047
+pass 4/4 step 112/128 lr 1.933e-07 reward 0.056
+pass 4/4 step 113/128 lr 1.701e-07 reward 0.041
+pass 4/4 step 114/128 lr 1.484e-07 reward 0.049
+pass 4/4 step 115/128 lr 1.282e-07 reward 0.046
+pass 4/4 step 116/128 lr 1.093e-07 reward 0.043
+pass 4/4 step 117/128 lr 9.198e-08 reward 0.051
+pass 4/4 step 118/128 lr 7.610e-08 reward 0.059
+pass 4/4 step 119/128 lr 6.170e-08 reward 0.044
+pass 4/4 step 120/128 lr 4.879e-08 reward 0.042
+pass 4/4 step 121/128 lr 3.739e-08 reward 0.041
+pass 4/4 step 122/128 lr 2.749e-08 reward 0.061
+pass 4/4 step 123/128 lr 1.910e-08 reward 0.041
+pass 4/4 step 124/128 lr 1.223e-08 reward 0.041
+pass 4/4 step 125/128 lr 6.881e-09 reward 0.044
+pass 4/4 step 126/128 lr 3.059e-09 reward 0.046
+pass 4/4 step 127/128 lr 7.649e-10 reward 0.033
+pass 4/4 step 128/128 lr 0.000e+00 reward 0.059
+saved pass 4 checkpoint to runs/grpo_baseline/pass_04.pt
+training complete: 8192 prompts, 32768 completions
+run_all: baseline grpo training exited; its process allocations are released.
+run_all: starting q0 grpo training
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+Loading weights:   0%|          | 0/272 [00:00<?, ?it/s]Loading weights: 100%|██████████| 272/272 [00:00<00:00, 4748.24it/s]
+[traj 1] cycle 1/4 step 1/32 lrm 1.000 wdm 0.700 distill 0 reward 0.038
+[traj 1] cycle 1/4 step 2/32 lrm 0.970 wdm 0.710 distill 0 reward 0.038
+[traj 1] cycle 1/4 step 3/32 lrm 0.941 wdm 0.719 distill 0 reward 0.034
+[traj 1] cycle 1/4 step 4/32 lrm 0.911 wdm 0.729 distill 0 reward 0.038
+[traj 1] cycle 1/4 step 5/32 lrm 0.881 wdm 0.739 distill 0 reward 0.039
+[traj 1] cycle 1/4 step 6/32 lrm 0.852 wdm 0.748 distill 0 reward 0.044
+[traj 1] cycle 1/4 step 7/32 lrm 0.822 wdm 0.758 distill 0 reward 0.028
+[traj 1] cycle 1/4 step 8/32 lrm 0.792 wdm 0.768 distill 0 reward 0.037
+[traj 1] cycle 1/4 step 9/32 lrm 0.763 wdm 0.777 distill 0 reward 0.030
+[traj 1] cycle 1/4 step 10/32 lrm 0.733 wdm 0.787 distill 0 reward 0.032
+[traj 1] cycle 1/4 step 11/32 lrm 0.703 wdm 0.797 distill 0 reward 0.041
+[traj 1] cycle 1/4 step 12/32 lrm 0.674 wdm 0.806 distill 0 reward 0.036
+[traj 1] cycle 1/4 step 13/32 lrm 0.644 wdm 0.816 distill 0 reward 0.038
+[traj 1] cycle 1/4 step 14/32 lrm 0.614 wdm 0.826 distill 0 reward 0.049
+[traj 1] cycle 1/4 step 15/32 lrm 0.585 wdm 0.835 distill 0 reward 0.037
+[traj 1] cycle 1/4 step 16/32 lrm 0.555 wdm 0.845 distill 0 reward 0.041
+[traj 1] cycle 1/4 step 17/32 lrm 0.525 wdm 0.855 distill 0 reward 0.047
+[traj 1] cycle 1/4 step 18/32 lrm 0.495 wdm 0.865 distill 0 reward 0.038
+[traj 1] cycle 1/4 step 19/32 lrm 0.466 wdm 0.874 distill 0 reward 0.039
+[traj 1] cycle 1/4 step 20/32 lrm 0.436 wdm 0.884 distill 0 reward 0.038
+[traj 1] cycle 1/4 step 21/32 lrm 0.406 wdm 0.894 distill 0 reward 0.044
+[traj 1] cycle 1/4 step 22/32 lrm 0.377 wdm 0.903 distill 0 reward 0.041
+[traj 1] cycle 1/4 step 23/32 lrm 0.347 wdm 0.913 distill 0 reward 0.039
+[traj 1] cycle 1/4 step 24/32 lrm 0.317 wdm 0.923 distill 0 reward 0.035
+[traj 1] cycle 1/4 step 25/32 lrm 0.288 wdm 0.932 distill 0 reward 0.047
+[traj 1] cycle 1/4 step 26/32 lrm 0.258 wdm 0.942 distill 0 reward 0.045
+[traj 1] cycle 1/4 step 27/32 lrm 0.228 wdm 0.952 distill 0 reward 0.036
+[traj 1] cycle 1/4 step 28/32 lrm 0.199 wdm 0.961 distill 0 reward 0.055
+[traj 1] cycle 1/4 step 29/32 lrm 0.169 wdm 0.971 distill 0 reward 0.043
+[traj 1] cycle 1/4 step 30/32 lrm 0.139 wdm 0.981 distill 0 reward 0.050
+[traj 1] cycle 1/4 step 31/32 lrm 0.110 wdm 0.990 distill 0 reward 0.045
+[traj 1] cycle 1/4 step 32/32 lrm 0.080 wdm 1.000 distill 0 reward 0.038
+[traj 1] saved snapshot cycle 1 -> runs/q0_grpo/traj1_cycle01.pt
+Traceback (most recent call last):
+  File "/home/ubuntu/q0/train_q0_grpo.py", line 494, in <module>
+    main()
+  File "/home/ubuntu/q0/train_q0_grpo.py", line 490, in main
+    run_training(args)
+  File "/home/ubuntu/q0/train_q0_grpo.py", line 369, in run_training
+    prompts, completions, snapshot_paths = run_trajectory(
+  File "/home/ubuntu/q0/train_q0_grpo.py", line 320, in run_trajectory
+    perturb_weights(model, scale, perturb_seed)
+  File "/home/ubuntu/q0/train_q0_grpo.py", line 79, in perturb_weights
+    noise = torch.randn(p.shape, generator=rng, dtype=torch.float32) * (std * scale)
+RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!
+run_all: q0 grpo training exited; its process allocations are released.
+run_all: q0 grpo training failed with status 1.

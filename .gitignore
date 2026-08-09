@@ -1,0 +1,6 @@
+__pycache__/
+*.py[cod]
+run_live.log
+eval_results_live.json
+.agents/
+.codex/

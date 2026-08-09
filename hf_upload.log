@@ -1,0 +1,66 @@
+[32m✓ Uploaded[0m
+  url: https://huggingface.co/Pradheep1647/q0-gsm8k-135m-baseline/commit/15fe11c360fea6cdffff8d3e8a49776fe315ae11
+[32m✓ Uploaded[0m
+  url: https://huggingface.co/Pradheep1647/q0-gsm8k-135m-baseline/commit/ee8c34fb62f957541855b5a4f63cb9d8e2912f48
+[32m✓ Uploaded[0m
+  url: https://huggingface.co/Pradheep1647/q0-gsm8k-135m-baseline/commit/c652d129529f9b951dbb7625de4d72d49259c1c4
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+  ...buntu/q0/2606.03938v2.pdf:  66%|██████▌   |  560kB /  853kB            [A[A
+
+  ...buntu/q0/2606.03938v2.pdf:  66%|██████▌   |  560kB /  853kB            [A[AProcessing Files (0 / 1)      :  66%|██████▌   |  560kB /  853kB,   ???B/s  
+New Data Upload               :  66%|██████▌   |  560kB /  853kB,   ???B/s  [A
+
+  ...buntu/q0/2606.03938v2.pdf: 100%|█████████▉|  853kB /  853kB            [A[AProcessing Files (0 / 1)      : 100%|█████████▉|  853kB /  853kB,   ???B/s  
+New Data Upload               : 100%|█████████▉|  853kB /  853kB,   ???B/s  [A
+
+  ...buntu/q0/2606.03938v2.pdf: 100%|█████████▉|  853kB /  853kB            [A[A
+
+  ...buntu/q0/2606.03938v2.pdf: 100%|██████████|  853kB /  853kB            [A[AProcessing Files (1 / 1)      : 100%|██████████|  853kB /  853kB, 82.8kB/s  
+New Data Upload               : 100%|██████████|  853kB /  853kB, 82.8kB/s  [A
+
+  ...buntu/q0/2606.03938v2.pdf: 100%|██████████|  853kB /  853kB            [A[AProcessing Files (1 / 1)      : 100%|██████████|  853kB /  853kB, 82.3kB/s  
+New Data Upload               : 100%|██████████|  853kB /  853kB, 82.3kB/s  
+  ...buntu/q0/2606.03938v2.pdf: 100%|██████████|  853kB /  853kB            
+[32m✓ Uploaded[0m
+  url: https://huggingface.co/Pradheep1647/q0-gsm8k-135m-baseline/commit/9e7dd8e5e119fd40a32e87684701a62d1c81f4fa
+[1m[31mError: Invalid value. Cannot set path_in_repo when local_path contains a wildcard.[0m
+[90mHint: set HF_DEBUG=1 as environment variable for full traceback.[0m
+
+upload retry after wildcard fix
+Found 4 files to upload
+Uploading... 4/4 files checked, 0/4 uploaded (0.00B transferred), 0 committed in 0 commit(s)
+[32m✓ Uploaded[0m
+  url: https://huggingface.co/Pradheep1647/q0-gsm8k-135m-baseline/commit/184c3521a9d19e0cae149843cca3ed56c946b050
+[32m✓ Uploaded[0m
+  url: https://huggingface.co/Pradheep1647/q0-gsm8k-135m-baseline/commit/7b13b3c2ce811c13829f2e3783d2cd9a1933dce0
+[32m✓ Uploaded[0m
+  url: https://huggingface.co/Pradheep1647/q0-gsm8k-135m-baseline/commit/469ac0e8e29222428eaf8210c8407e3a877d3d4e
+Found 4 files to upload
+[32m✓ Uploaded[0m
+  url: https://huggingface.co/Pradheep1647/q0-gsm8k-135m/commit/93561400403b484829acd2f04ea48331f4ce396e
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+  ...buntu/q0/2606.03938v2.pdf: 100%|██████████|  853kB /  853kB            [A[A
+
+  ...buntu/q0/2606.03938v2.pdf: 100%|██████████|  853kB /  853kB            [A[AProcessing Files (1 / 1)      : 100%|██████████|  853kB /  853kB,   ???B/s  
+
+  ...buntu/q0/2606.03938v2.pdf: 100%|██████████|  853kB /  853kB            [A[A
+
+  ...buntu/q0/2606.03938v2.pdf: 100%|██████████|  853kB /  853kB            [A[AProcessing Files (1 / 1)      : 100%|██████████|  853kB /  853kB, 84.0kB/s  
+New Data Upload               : |          |  0.00B /  0.00B,  0.00B/s  
+  ...buntu/q0/2606.03938v2.pdf: 100%|██████████|  853kB /  853kB            
+[32m✓ Uploaded[0m
+  url: https://huggingface.co/Pradheep1647/q0-gsm8k-135m/commit/9925b1b0b04065aba36b150256b4658982d24746
+Found 8 files to upload
+Uploading... 8/8 files checked, 0/8 uploaded (0.00B transferred), 0 committed in 0 commit(s)
+[32m✓ Uploaded[0m
+  url: https://huggingface.co/Pradheep1647/q0-gsm8k-135m/commit/6aecc23cdc88e99291efb333a87647d49e073d07
+[32m✓ Uploaded[0m
+  url: https://huggingface.co/Pradheep1647/q0-gsm8k-135m/commit/bf09a6e21ab5fd1c843e690123c78f943dd1ca10
+[32m✓ Uploaded[0m
+  url: https://huggingface.co/Pradheep1647/q0-gsm8k-135m/commit/5a1ad58898e2b30f156eb98191f1f78d1f067001
+[32m✓ Uploaded[0m
+  url: https://huggingface.co/Pradheep1647/q0-gsm8k-135m/commit/dbd6a206e112fc64abcf3fe6f679bbb7ecae524e
