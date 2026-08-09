@@ -1,0 +1,5 @@
+validation step 8: pass@1 0.0078 pass@4 0.0296 pass@8 0.0547
+validation step 16: pass@1 0.0068 pass@4 0.0265 pass@8 0.0508
+validation step 24: pass@1 0.0071 pass@4 0.0262 pass@8 0.0469
+validation step 32: pass@1 0.0073 pass@4 0.0280 pass@8 0.0527
+pass@k selection complete: selected step 8

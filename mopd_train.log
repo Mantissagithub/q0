@@ -1,0 +1,43 @@
+Generating train split:   0%|          | 0/7473 [00:00<?, ? examples/s]Generating train split: 100%|██████████| 7473/7473 [00:00<00:00, 248924.17 examples/s]
+Generating test split:   0%|          | 0/1319 [00:00<?, ? examples/s]Generating test split: 100%|██████████| 1319/1319 [00:00<00:00, 146811.21 examples/s]
+step 1/32 lr 1.000e-06 loss 0.0042
+step 2/32 lr 9.974e-07 loss 0.0045
+step 3/32 lr 9.898e-07 loss 0.0043
+step 4/32 lr 9.771e-07 loss 0.0044
+step 5/32 lr 9.595e-07 loss 0.0046
+step 6/32 lr 9.372e-07 loss 0.0044
+step 7/32 lr 9.104e-07 loss 0.0043
+step 8/32 lr 8.794e-07 loss 0.0044
+saved validation candidate at step 8
+step 9/32 lr 8.445e-07 loss 0.0043
+step 10/32 lr 8.061e-07 loss 0.0045
+step 11/32 lr 7.645e-07 loss 0.0043
+step 12/32 lr 7.202e-07 loss 0.0044
+step 13/32 lr 6.737e-07 loss 0.0045
+step 14/32 lr 6.253e-07 loss 0.0046
+step 15/32 lr 5.757e-07 loss 0.0044
+step 16/32 lr 5.253e-07 loss 0.0045
+saved validation candidate at step 16
+step 17/32 lr 4.747e-07 loss 0.0045
+step 18/32 lr 4.243e-07 loss 0.0045
+step 19/32 lr 3.747e-07 loss 0.0046
+step 20/32 lr 3.263e-07 loss 0.0040
+step 21/32 lr 2.798e-07 loss 0.0043
+step 22/32 lr 2.355e-07 loss 0.0044
+step 23/32 lr 1.939e-07 loss 0.0041
+step 24/32 lr 1.555e-07 loss 0.0045
+saved validation candidate at step 24
+step 25/32 lr 1.206e-07 loss 0.0044
+step 26/32 lr 8.962e-08 loss 0.0043
+step 27/32 lr 6.283e-08 loss 0.0044
+step 28/32 lr 4.052e-08 loss 0.0042
+step 29/32 lr 2.293e-08 loss 0.0045
+step 30/32 lr 1.024e-08 loss 0.0046
+step 31/32 lr 2.565e-09 loss 0.0044
+step 32/32 lr 0.000e+00 loss 0.0045
+saved validation candidate at step 32
+validation step 8: exact_match 0.0098 parse_rate 0.4062
+validation step 16: exact_match 0.0098 parse_rate 0.4316
+validation step 24: exact_match 0.0137 parse_rate 0.4258
+validation step 32: exact_match 0.0078 parse_rate 0.3906
+mopd complete: selected step 24 after 2048 prompts and 169871 completion tokens

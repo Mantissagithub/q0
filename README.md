@@ -2,7 +2,7 @@
 
 a small, exploratory adaptation of [q0: Primitives for Hyper-Epoch Pretraining](https://arxiv.org/abs/2606.03938) to reasoning with GRPO. the base model is `HuggingFaceTB/SmolLM2-135M-Instruct`, pinned to revision `12fd25f`.
 
-🤗 [baseline checkpoints](https://huggingface.co/Pradheep1647/q0-gsm8k-135m-baseline) · 🤗 [q0 snapshots and weights](https://huggingface.co/Pradheep1647/q0-gsm8k-135m)
+🤗 [baseline checkpoints](https://huggingface.co/Pradheep1647/q0-gsm8k-135m-baseline) · 🤗 [q0 snapshots and weights](https://huggingface.co/Pradheep1647/q0-gsm8k-135m) · 🤗 [distilled checkpoint](https://huggingface.co/Pradheep1647/q0-gsm8k-135m-mopd)
 
 ![q0 pipeline](q0.png)
 
@@ -28,6 +28,7 @@ all numbers below use the complete 1,319-example GSM8K test split.
 | best q0 snapshot | 10 | 0.758% |
 | learned ensemble, K=8 | 11 | 0.834% |
 | uniform ensemble, K=8 | 12 | 0.910% |
+| distilled student, selected at step 8 | 12 | 0.910% |
 
 ![checkpoint accuracy comparison](checkpoint_accuracy_comparison.png)
 
@@ -54,15 +55,32 @@ $$
 \mathcal{L} = \frac{1}{4}\sum_{i=1}^{4} KL\left(p_{T_i} \parallel p_\theta\right).
 $$
 
-`mixture_weights.json` is used only to choose the top-4 snapshot names. their numeric weights do not enter the loss; each teacher contributes equally. this is not an exact MOPD reproduction because the paper routes domains and uses reverse KL. this small variant keeps the shared-origin teachers and student-generated states, but uses direct forward-KL distillation. it runs one pass over the same 2,048 prompts and saves one `opsd.pt` checkpoint plus its own JSONL metrics.
+`mixture_weights.json` is used only to choose the top-4 snapshot names. their numeric weights do not enter the loss; each teacher contributes equally. this is not an exact MOPD reproduction because the paper routes domains and uses reverse KL. this small variant keeps the shared-origin teachers and student-generated states, but uses direct forward-KL distillation.
 
-the table above predates this follow-up, so it makes no accuracy claim for the distilled checkpoint yet. `run_all.sh` now trains it after q0 and evaluates it under the `mopd` result key. that comparison tells us whether the top-4 inference ensemble can be compressed into one model without losing its small gain.
+the student ran one pass over 2,048 prompts, with candidates saved at steps 8, 16, 24, and 32. selection used a fresh 512-question slice from the unused GSM8K train remainder. each question got eight sampled answers, then candidates were ranked by pass@8, pass@4, and pass@1. step 8 won with 5.47% validation pass@8.
+
+![distillation training curves](mopd_training_curves.png)
+
+the forward KL stayed in a narrow 0.0040 to 0.0046 range. it did not steadily fall, which already suggests the extra steps were not producing a clear distillation gain.
+
+![distilled checkpoint validation](mopd_validation_comparison.png)
+
+| official test system | greedy | pass@1 | pass@4 | pass@8 |
+| --- | ---: | ---: | ---: | ---: |
+| best baseline, pass 4 | 0.91% | 0.78% | 2.85% | 5.16% |
+| best q0 checkpoint | 0.76% | 0.54% | 2.03% | 3.79% |
+| distilled student, step 8 | 0.91% | 0.51% | 1.94% | 3.64% |
+
+![final distilled checkpoint comparison](mopd_final_comparison.png)
+
+the single student matched the best baseline and uniform K=8 ensemble under greedy decoding, with 12/1,319 correct. sampled pass@k was weaker than both comparison checkpoints. so this run compressed the four-teacher training signal into one model, but did not improve reasoning accuracy. the validation winner also did not transfer into a pass@k win on the official test split.
 
 ## files
 
 - `train_grpo.py`: four-pass GRPO baseline
 - `train_q0_grpo.py`: cyclic trajectories, KL distillation, snapshots, and learned prior
 - `train_mopd.py`: one-pass on-policy distillation into a single checkpoint
-- `eval.py`: individual, distilled, and probability-space ensemble evaluation
+- `eval.py`: individual, distilled, pass@k, and probability-space ensemble evaluation
 - `run_all.sh`: baseline, q0, distillation, then evaluation
-- `eval_results.json`, `mixture_weights.json`, and `run.log`: complete artifacts from the run
+- `eval_results.json` and `mixture_weights.json`: complete evaluation and mixture artifacts
+- `mopd_training_metrics.jsonl`, `mopd_validation_results.json`, and `mopd_*.log`: distilled run metrics and logs

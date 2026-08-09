@@ -1,0 +1,79 @@
+{
+  "validation_source": "fresh deterministic slice from the unused gsm8k train remainder",
+  "validation_count": 512,
+  "selection_order": [
+    "pass_at_8",
+    "pass_at_4",
+    "pass_at_1",
+    "parse_at_8",
+    "later_step"
+  ],
+  "selected_step": 8,
+  "selected_checkpoint": "candidate_step08.pt",
+  "candidates": [
+    {
+      "pass_at_1": 0.0078125,
+      "pass_at_4": 0.029575892857142856,
+      "pass_at_8": 0.0546875,
+      "parse_at_1": 0.357177734375,
+      "parse_at_4": 0.7541852678571419,
+      "parse_at_8": 0.908203125,
+      "samples_per_problem": 8,
+      "avg_sample_response_length": 83.693603515625,
+      "pass_at_k_timing_seconds": 64.62012600898743,
+      "pass_at_k_peak_memory_bytes": 5742654976,
+      "pass_at_k_seed": 42,
+      "pass_at_k_source": "runs/mopd/candidate_step08.pt",
+      "step": 8,
+      "checkpoint": "candidate_step08.pt"
+    },
+    {
+      "pass_at_1": 0.0068359375,
+      "pass_at_4": 0.026506696428571428,
+      "pass_at_8": 0.05078125,
+      "parse_at_1": 0.356201171875,
+      "parse_at_4": 0.7597935267857131,
+      "parse_at_8": 0.908203125,
+      "samples_per_problem": 8,
+      "avg_sample_response_length": 83.3623046875,
+      "pass_at_k_timing_seconds": 64.1380386352539,
+      "pass_at_k_peak_memory_bytes": 5742720512,
+      "pass_at_k_seed": 42,
+      "pass_at_k_source": "runs/mopd/candidate_step16.pt",
+      "step": 16,
+      "checkpoint": "candidate_step16.pt"
+    },
+    {
+      "pass_at_1": 0.007080078125,
+      "pass_at_4": 0.026227678571428572,
+      "pass_at_8": 0.046875,
+      "parse_at_1": 0.354736328125,
+      "parse_at_4": 0.7470424107142847,
+      "parse_at_8": 0.888671875,
+      "samples_per_problem": 8,
+      "avg_sample_response_length": 83.570068359375,
+      "pass_at_k_timing_seconds": 64.1052987575531,
+      "pass_at_k_peak_memory_bytes": 5742720512,
+      "pass_at_k_seed": 42,
+      "pass_at_k_source": "runs/mopd/candidate_step24.pt",
+      "step": 24,
+      "checkpoint": "candidate_step24.pt"
+    },
+    {
+      "pass_at_1": 0.00732421875,
+      "pass_at_4": 0.028041294642857144,
+      "pass_at_8": 0.052734375,
+      "parse_at_1": 0.363525390625,
+      "parse_at_4": 0.758705357142856,
+      "parse_at_8": 0.896484375,
+      "samples_per_problem": 8,
+      "avg_sample_response_length": 83.138916015625,
+      "pass_at_k_timing_seconds": 64.07396984100342,
+      "pass_at_k_peak_memory_bytes": 5742720512,
+      "pass_at_k_seed": 42,
+      "pass_at_k_source": "runs/mopd/candidate_step32.pt",
+      "step": 32,
+      "checkpoint": "candidate_step32.pt"
+    }
+  ]
+}

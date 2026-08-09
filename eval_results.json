@@ -90,9 +90,30 @@
         0.3065130114555359,
         0.17634369432926178,
         1.697801963018719e-05
-      ]
+      ],
+      "mopd_file": {
+        "relative_path": "opsd.pt",
+        "size_bytes": 325741582,
+        "mtime_ns": 1786286810271438820,
+        "sha256": "f9fcd1bd1df97e08d6b135fa1b276fcd9e8eba3dfb8bc3a7776876f95b782dc7"
+      },
+      "pass_at_k_winner_files": {
+        "baseline_pass_04.pt": {
+          "relative_path": "pass_04.pt",
+          "size_bytes": 269122467,
+          "mtime_ns": 1786286907921956471,
+          "sha256": "3b1e542d7dee30933af5ce9d0be74c16b2b3d02b8cb0b742b5d4baf42a772d35"
+        },
+        "q0_traj1_cycle01.pt": {
+          "relative_path": "traj1_cycle01.pt",
+          "size_bytes": 269122467,
+          "mtime_ns": 1786286910386215591,
+          "sha256": "efd1c38c6bec7c3b7f89efe76eb102ad6fb4eb7da818ff173aee32b720c1d62d"
+        }
+      }
     },
-    "timestamp": "2026-08-09T06:13:41Z"
+    "timestamp": "2026-08-09T06:13:41Z",
+    "mopd_evaluated_at": "2026-08-09T15:02:51Z"
   },
   "results": {
     "base": {
@@ -133,7 +154,20 @@
       "avg_response_length": 71.59059893858984,
       "timing_seconds": 362.35880279541016,
       "peak_memory_bytes": 445990400,
-      "source": "runs/grpo_baseline/pass_04.pt"
+      "source": "runs/grpo_baseline/pass_04.pt",
+      "pass_at_1": 0.0077710386656558,
+      "pass_at_4": 0.028484782844145993,
+      "pass_at_8": 0.05155420773313116,
+      "parse_at_1": 0.3827710386656558,
+      "parse_at_4": 0.7866240658507561,
+      "parse_at_8": 0.910538286580743,
+      "samples_per_problem": 8,
+      "avg_sample_response_length": 77.58083775587566,
+      "pass_at_k_timing_seconds": 419.84532833099365,
+      "pass_at_k_peak_memory_bytes": 1739342336,
+      "pass_at_k_seed": 42,
+      "pass_at_k_source": "runs/grpo_baseline/pass_04.pt",
+      "pass_at_k_checkpoint_sha256": "3b1e542d7dee30933af5ce9d0be74c16b2b3d02b8cb0b742b5d4baf42a772d35"
     },
     "q0_traj1_cycle01.pt": {
       "exact_match": 0.0075815011372251705,
@@ -141,7 +175,20 @@
       "avg_response_length": 79.02047005307051,
       "timing_seconds": 363.6220600605011,
       "peak_memory_bytes": 445990400,
-      "source": "runs/q0_grpo/traj1_cycle01.pt"
+      "source": "runs/q0_grpo/traj1_cycle01.pt",
+      "pass_at_1": 0.005401819560272934,
+      "pass_at_4": 0.020253438752301525,
+      "pass_at_8": 0.03790750568612585,
+      "parse_at_1": 0.33870356330553447,
+      "parse_at_4": 0.7331311599696783,
+      "parse_at_8": 0.8764215314632298,
+      "samples_per_problem": 8,
+      "avg_sample_response_length": 83.59505307050796,
+      "pass_at_k_timing_seconds": 419.99301838874817,
+      "pass_at_k_peak_memory_bytes": 1739342336,
+      "pass_at_k_seed": 42,
+      "pass_at_k_source": "runs/q0_grpo/traj1_cycle01.pt",
+      "pass_at_k_checkpoint_sha256": "efd1c38c6bec7c3b7f89efe76eb102ad6fb4eb7da818ff173aee32b720c1d62d"
     },
     "q0_traj1_cycle02.pt": {
       "exact_match": 0.006065200909780136,
@@ -362,6 +409,27 @@
         ],
         "label": "uniform_k8"
       }
+    },
+    "mopd": {
+      "exact_match": 0.009097801364670205,
+      "parse_rate": 0.38286580742987114,
+      "avg_response_length": 82.66793025018954,
+      "timing_seconds": 399.76571464538574,
+      "peak_memory_bytes": 446064640,
+      "source": "runs/mopd/opsd.pt",
+      "pass_at_1": 0.00511751326762699,
+      "pass_at_4": 0.019386981479475793,
+      "pass_at_8": 0.03639120545868082,
+      "parse_at_1": 0.3205079605761941,
+      "parse_at_4": 0.7169933932632999,
+      "parse_at_8": 0.8726307808946171,
+      "samples_per_problem": 8,
+      "avg_sample_response_length": 85.6527672479151,
+      "pass_at_k_timing_seconds": 420.51456809043884,
+      "pass_at_k_peak_memory_bytes": 1739110912,
+      "pass_at_k_seed": 42,
+      "pass_at_k_source": "runs/mopd/opsd.pt",
+      "checkpoint_sha256": "f9fcd1bd1df97e08d6b135fa1b276fcd9e8eba3dfb8bc3a7776876f95b782dc7"
     }
   }
 }
