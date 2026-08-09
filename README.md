@@ -75,12 +75,33 @@ the forward KL stayed in a narrow 0.0040 to 0.0046 range. it did not steadily fa
 
 the single student matched the best baseline and uniform K=8 ensemble under greedy decoding, with 12/1,319 correct. sampled pass@k was weaker than both comparison checkpoints. so this run compressed the four-teacher training signal into one model, but did not improve reasoning accuracy. the validation winner also did not transfer into a pass@k win on the official test split.
 
+## math-500 transfer
+
+the same selected checkpoints were evaluated on all 500 MATH-500 problems with greedy decoding, a 256-token answer limit, and `math-verify` symbolic equivalence. nothing was retrained on MATH-500.
+
+| system | correct | accuracy | parse rate | average response | generation time | peak cuda allocated |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| baseline, pass 4 | 5/500 | 1.0% | 83.0% | 99.7 tokens | 4m 32s | 0.84 GiB |
+| q0 best single | 5/500 | 1.0% | 85.6% | 115.6 tokens | 4m 24s | 0.84 GiB |
+| q0 learned top-4 | 6/500 | 1.2% | 82.6% | 111.5 tokens | 17m 02s | 8.36 GiB |
+| distilled student | 6/500 | 1.2% | 86.6% | 118.6 tokens | 4m 27s | 0.84 GiB |
+
+![math-500 comparison](math500_comparison.png)
+
+this is still floor-level performance. the learned top-4 adds one answer over baseline, but a 1/500 gap is not evidence of a reliable generalization gain. it solves the baseline's five correct problems plus one more. the distilled student keeps the same total in one checkpoint and gets the best parse rate, while running about as quickly as a single model. it is not just copying the ensemble's six wins: only four solved problems overlap.
+
+the failures are broad. every system scores zero on counting and probability and number theory. baseline, q0 single, and q0 top-4 solve nothing at level 4, while only q0 single solves one level-5 problem. the distilled student solves one problem at each of levels 4 and 5, but the total remains too small to read as stronger hard-math reasoning.
+
+so the transfer result agrees with the GSM8K result: q0-style ensembling and distillation work mechanically, and distillation removes the four-model inference cost, but this 135M base is too close to the reasoning floor to separate the methods cleanly. `math500_results.json` keeps every aggregate and breakdown, while `math500_predictions.jsonl` keeps all 2,000 scored generations for inspection.
+
 ## files
 
 - `train_grpo.py`: four-pass GRPO baseline
 - `train_q0_grpo.py`: cyclic trajectories, KL distillation, snapshots, and learned prior
 - `train_mopd.py`: one-pass on-policy distillation into a single checkpoint
 - `eval.py`: individual, distilled, pass@k, and probability-space ensemble evaluation
+- `eval_math500.py`: deterministic MATH-500 transfer evaluation
 - `run_all.sh`: baseline, q0, distillation, then evaluation
 - `eval_results.json` and `mixture_weights.json`: complete evaluation and mixture artifacts
 - `mopd_training_metrics.jsonl`, `mopd_validation_results.json`, and `mopd_*.log`: distilled run metrics and logs
+- `math500_results.json`, `math500_predictions.jsonl`, and `math500_run.log`: complete MATH-500 scores, raw generations, and run log

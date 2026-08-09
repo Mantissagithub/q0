@@ -1,0 +1,325 @@
+{
+  "metadata": {
+    "dataset": "HuggingFaceH4/MATH-500",
+    "dataset_revision": "6e4ed1a2a79af7d8630a6b768ec859cb5af4d3be",
+    "split": "test",
+    "count": 500,
+    "model_name": "HuggingFaceTB/SmolLM2-135M-Instruct",
+    "model_revision": "12fd25f77366fa6b3b4b768ec3050bf629380bac",
+    "batch_size": 16,
+    "max_new_tokens": 256,
+    "scorer": "math-verify 0.9.0 symbolic equivalence",
+    "timestamp": "2026-08-09T17:49:16Z"
+  },
+  "results": {
+    "baseline_grpo": {
+      "correct": 5,
+      "count": 500,
+      "accuracy": 0.01,
+      "parse_rate": 0.83,
+      "avg_response_length": 99.682,
+      "timing_seconds": 272.19762897491455,
+      "peak_memory_bytes": 900880384,
+      "by_subject": {
+        "Algebra": {
+          "correct": 1,
+          "count": 124,
+          "accuracy": 0.008064516129032258
+        },
+        "Counting & Probability": {
+          "correct": 0,
+          "count": 38,
+          "accuracy": 0.0
+        },
+        "Geometry": {
+          "correct": 2,
+          "count": 41,
+          "accuracy": 0.04878048780487805
+        },
+        "Intermediate Algebra": {
+          "correct": 0,
+          "count": 97,
+          "accuracy": 0.0
+        },
+        "Number Theory": {
+          "correct": 0,
+          "count": 62,
+          "accuracy": 0.0
+        },
+        "Prealgebra": {
+          "correct": 2,
+          "count": 82,
+          "accuracy": 0.024390243902439025
+        },
+        "Precalculus": {
+          "correct": 0,
+          "count": 56,
+          "accuracy": 0.0
+        }
+      },
+      "by_level": {
+        "1": {
+          "correct": 1,
+          "count": 43,
+          "accuracy": 0.023255813953488372
+        },
+        "2": {
+          "correct": 1,
+          "count": 90,
+          "accuracy": 0.011111111111111112
+        },
+        "3": {
+          "correct": 3,
+          "count": 105,
+          "accuracy": 0.02857142857142857
+        },
+        "4": {
+          "correct": 0,
+          "count": 128,
+          "accuracy": 0.0
+        },
+        "5": {
+          "correct": 0,
+          "count": 134,
+          "accuracy": 0.0
+        }
+      },
+      "source": "runs/grpo_baseline/pass_04.pt"
+    },
+    "q0_best_single": {
+      "correct": 5,
+      "count": 500,
+      "accuracy": 0.01,
+      "parse_rate": 0.856,
+      "avg_response_length": 115.616,
+      "timing_seconds": 264.1434414386749,
+      "peak_memory_bytes": 899899904,
+      "by_subject": {
+        "Algebra": {
+          "correct": 0,
+          "count": 124,
+          "accuracy": 0.0
+        },
+        "Counting & Probability": {
+          "correct": 0,
+          "count": 38,
+          "accuracy": 0.0
+        },
+        "Geometry": {
+          "correct": 2,
+          "count": 41,
+          "accuracy": 0.04878048780487805
+        },
+        "Intermediate Algebra": {
+          "correct": 1,
+          "count": 97,
+          "accuracy": 0.010309278350515464
+        },
+        "Number Theory": {
+          "correct": 0,
+          "count": 62,
+          "accuracy": 0.0
+        },
+        "Prealgebra": {
+          "correct": 2,
+          "count": 82,
+          "accuracy": 0.024390243902439025
+        },
+        "Precalculus": {
+          "correct": 0,
+          "count": 56,
+          "accuracy": 0.0
+        }
+      },
+      "by_level": {
+        "1": {
+          "correct": 1,
+          "count": 43,
+          "accuracy": 0.023255813953488372
+        },
+        "2": {
+          "correct": 0,
+          "count": 90,
+          "accuracy": 0.0
+        },
+        "3": {
+          "correct": 3,
+          "count": 105,
+          "accuracy": 0.02857142857142857
+        },
+        "4": {
+          "correct": 0,
+          "count": 128,
+          "accuracy": 0.0
+        },
+        "5": {
+          "correct": 1,
+          "count": 134,
+          "accuracy": 0.007462686567164179
+        }
+      },
+      "source": "runs/q0_grpo/traj1_cycle01.pt"
+    },
+    "q0_learned_top4": {
+      "correct": 6,
+      "count": 500,
+      "accuracy": 0.012,
+      "parse_rate": 0.826,
+      "avg_response_length": 111.494,
+      "timing_seconds": 1022.3939294815063,
+      "peak_memory_bytes": 8972587520,
+      "by_subject": {
+        "Algebra": {
+          "correct": 1,
+          "count": 124,
+          "accuracy": 0.008064516129032258
+        },
+        "Counting & Probability": {
+          "correct": 0,
+          "count": 38,
+          "accuracy": 0.0
+        },
+        "Geometry": {
+          "correct": 2,
+          "count": 41,
+          "accuracy": 0.04878048780487805
+        },
+        "Intermediate Algebra": {
+          "correct": 1,
+          "count": 97,
+          "accuracy": 0.010309278350515464
+        },
+        "Number Theory": {
+          "correct": 0,
+          "count": 62,
+          "accuracy": 0.0
+        },
+        "Prealgebra": {
+          "correct": 2,
+          "count": 82,
+          "accuracy": 0.024390243902439025
+        },
+        "Precalculus": {
+          "correct": 0,
+          "count": 56,
+          "accuracy": 0.0
+        }
+      },
+      "by_level": {
+        "1": {
+          "correct": 1,
+          "count": 43,
+          "accuracy": 0.023255813953488372
+        },
+        "2": {
+          "correct": 2,
+          "count": 90,
+          "accuracy": 0.022222222222222223
+        },
+        "3": {
+          "correct": 3,
+          "count": 105,
+          "accuracy": 0.02857142857142857
+        },
+        "4": {
+          "correct": 0,
+          "count": 128,
+          "accuracy": 0.0
+        },
+        "5": {
+          "correct": 0,
+          "count": 134,
+          "accuracy": 0.0
+        }
+      },
+      "source": {
+        "paths": [
+          "runs/q0_grpo/traj2_cycle02.pt",
+          "runs/q0_grpo/traj2_cycle01.pt",
+          "runs/q0_grpo/traj1_cycle02.pt",
+          "runs/q0_grpo/traj2_cycle03.pt"
+        ],
+        "weights": [
+          0.3123737040218858,
+          0.279887916407801,
+          0.2280228995750191,
+          0.17971547999529414
+        ]
+      }
+    },
+    "mopd": {
+      "correct": 6,
+      "count": 500,
+      "accuracy": 0.012,
+      "parse_rate": 0.866,
+      "avg_response_length": 118.636,
+      "timing_seconds": 267.16484236717224,
+      "peak_memory_bytes": 899752448,
+      "by_subject": {
+        "Algebra": {
+          "correct": 1,
+          "count": 124,
+          "accuracy": 0.008064516129032258
+        },
+        "Counting & Probability": {
+          "correct": 0,
+          "count": 38,
+          "accuracy": 0.0
+        },
+        "Geometry": {
+          "correct": 2,
+          "count": 41,
+          "accuracy": 0.04878048780487805
+        },
+        "Intermediate Algebra": {
+          "correct": 1,
+          "count": 97,
+          "accuracy": 0.010309278350515464
+        },
+        "Number Theory": {
+          "correct": 0,
+          "count": 62,
+          "accuracy": 0.0
+        },
+        "Prealgebra": {
+          "correct": 2,
+          "count": 82,
+          "accuracy": 0.024390243902439025
+        },
+        "Precalculus": {
+          "correct": 0,
+          "count": 56,
+          "accuracy": 0.0
+        }
+      },
+      "by_level": {
+        "1": {
+          "correct": 1,
+          "count": 43,
+          "accuracy": 0.023255813953488372
+        },
+        "2": {
+          "correct": 0,
+          "count": 90,
+          "accuracy": 0.0
+        },
+        "3": {
+          "correct": 3,
+          "count": 105,
+          "accuracy": 0.02857142857142857
+        },
+        "4": {
+          "correct": 1,
+          "count": 128,
+          "accuracy": 0.0078125
+        },
+        "5": {
+          "correct": 1,
+          "count": 134,
+          "accuracy": 0.007462686567164179
+        }
+      },
+      "source": "runs/mopd/opsd.pt"
+    }
+  }
+}
