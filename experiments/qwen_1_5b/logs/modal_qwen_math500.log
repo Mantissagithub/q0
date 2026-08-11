@@ -1,0 +1,31 @@
+✓ Initialized. View run at 
+https://modal.com/apps/mantissagithub/main/ap-AWX7lfFQtzIqE5NWncYkV4
+✓ Created objects.
+├── 🔨 Created mount /home/pradheep/Documents/q0/modal_math500_qwen.py
+├── 🔨 Created mount eval_math500.py
+├── 🔨 Created mount eval.py
+├── 🔨 Created mount train_grpo.py
+└── 🔨 Created function evaluate.
+
+[1AGenerating test split: 0 examples [00:00, ? examples/s]Generating test split: 500 examples [00:00, 43970.98 examples/s]
+Sliding Window Attention is enabled but not implemented for `sdpa`; unexpected results may be encountered.
+/usr/local/lib/python3.11/site-packages/transformers/generation/configuration_utils.py:631: UserWarning: `do_sample` is set to `False`. However, `temperature` is set to `0.7` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `temperature`.
+  warnings.warn(
+/usr/local/lib/python3.11/site-packages/transformers/generation/configuration_utils.py:636: UserWarning: `do_sample` is set to `False`. However, `top_p` is set to `0.8` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_p`.
+  warnings.warn(
+/usr/local/lib/python3.11/site-packages/transformers/generation/configuration_utils.py:653: UserWarning: `do_sample` is set to `False`. However, `top_k` is set to `20` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_k`.
+  warnings.warn(
+/usr/local/lib/python3.11/site-packages/transformers/generation/configuration_utils.py:631: UserWarning: `do_sample` is set to `False`. However, `temperature` is set to `0.7` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `temperature`.
+  warnings.warn(
+/usr/local/lib/python3.11/site-packages/transformers/generation/configuration_utils.py:636: UserWarning: `do_sample` is set to `False`. However, `top_p` is set to `0.8` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_p`.
+  warnings.warn(
+/usr/local/lib/python3.11/site-packages/transformers/generation/configuration_utils.py:653: UserWarning: `do_sample` is set to `False`. However, `top_k` is set to `20` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_k`.
+  warnings.warn(
+saved results_math500_qwen.json locally
+
+===== MATH-500 transfer (math_verify, n=500) =====
+base       accuracy=0.2660  parse_rate=0.9880  (133/500)
+pass_02    accuracy=0.3160  parse_rate=0.9940  (158/500)
+Stopping app - local entrypoint completed.
+✓ App completed. View run at 
+https://modal.com/apps/mantissagithub/main/ap-AWX7lfFQtzIqE5NWncYkV4

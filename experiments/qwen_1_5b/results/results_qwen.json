@@ -1,0 +1,38 @@
+{
+  "eval": {
+    "base": {
+      "exact_match": 0.4836997725549659,
+      "parse_rate": 0.9886277482941622,
+      "avg_response_length": 120.77331311599697,
+      "timing_seconds": 394.5089123249054,
+      "peak_memory_bytes": 3880584704,
+      "source": "base"
+    },
+    "pass_01": {
+      "exact_match": 0.6573161485974223,
+      "parse_rate": 0.9840788476118272,
+      "avg_response_length": 168.48369977255496,
+      "timing_seconds": 445.26997542381287,
+      "peak_memory_bytes": 3879976960,
+      "source": "pass_01"
+    },
+    "pass_02": {
+      "exact_match": 0.6664139499620925,
+      "parse_rate": 0.9818043972706596,
+      "avg_response_length": 180.94162244124337,
+      "timing_seconds": 448.34085726737976,
+      "peak_memory_bytes": 3879976960,
+      "source": "pass_02"
+    },
+    "pass_03": {
+      "exact_match": 0.6603487490523123,
+      "parse_rate": 0.9719484457922669,
+      "avg_response_length": 183.83244882486733,
+      "timing_seconds": 457.28483271598816,
+      "peak_memory_bytes": 3879976960,
+      "source": "pass_03"
+    }
+  },
+  "reward_curve": [],
+  "test_n": 1319
+}

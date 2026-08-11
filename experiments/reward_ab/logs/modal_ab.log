@@ -1,0 +1,137 @@
+✓ Initialized. View run at 
+https://modal.com/apps/mantissagithub/main/ap-AtiLLwJ1WFTY2GhHEO3j8C
+✓ Created objects.
+├── 🔨 Created mount /home/pradheep/Documents/q0/modal_ab.py
+├── 🔨 Created mount train_grpo_old.py
+├── 🔨 Created mount eval.py
+├── 🔨 Created mount train_grpo.py
+└── 🔨 Created function ab.
+435e-06 reward 0.047
+pass 2/4 step 50/128 lr 3.378e-06 reward 0.041
+pass 2/4 step 51/128 lr 3.319e-06 reward 0.046
+pass 2/4 step 52/128 lr 3.261e-06 reward 0.041
+pass 2/4 step 53/128 lr 3.202e-06 reward 0.062
+pass 2/4 step 54/128 lr 3.142e-06 reward 0.049
+pass 2/4 step 55/128 lr 3.082e-06 reward 0.043
+pass 2/4 step 56/128 lr 3.022e-06 reward 0.050
+pass 2/4 step 57/128 lr 2.961e-06 reward 0.054
+pass 2/4 step 58/128 lr 2.900e-06 reward 0.046
+pass 2/4 step 59/128 lr 2.839e-06 reward 0.037
+pass 2/4 step 60/128 lr 2.778e-06 reward 0.045
+pass 2/4 step 61/128 lr 2.716e-06 reward 0.043
+pass 2/4 step 62/128 lr 2.655e-06 reward 0.053
+pass 2/4 step 63/128 lr 2.593e-06 reward 0.050
+pass 2/4 step 64/128 lr 2.531e-06 reward 0.042
+saved pass 2 checkpoint to /outputs/grpo_oldreward/pass_02.pt
+pass 3/4 step 65/128 lr 2.469e-06 reward 0.049
+pass 3/4 step 66/128 lr 2.407e-06 reward 0.041
+pass 3/4 step 67/128 lr 2.345e-06 reward 0.062
+pass 3/4 step 68/128 lr 2.284e-06 reward 0.054
+pass 3/4 step 69/128 lr 2.222e-06 reward 0.036
+pass 3/4 step 70/128 lr 2.161e-06 reward 0.043
+pass 3/4 step 71/128 lr 2.100e-06 reward 0.055
+pass 3/4 step 72/128 lr 2.039e-06 reward 0.048
+pass 3/4 step 73/128 lr 1.978e-06 reward 0.039
+pass 3/4 step 74/128 lr 1.918e-06 reward 0.046
+pass 3/4 step 75/128 lr 1.858e-06 reward 0.041
+pass 3/4 step 76/128 lr 1.798e-06 reward 0.054
+pass 3/4 step 77/128 lr 1.739e-06 reward 0.049
+pass 3/4 step 78/128 lr 1.681e-06 reward 0.045
+pass 3/4 step 79/128 lr 1.622e-06 reward 0.045
+pass 3/4 step 80/128 lr 1.565e-06 reward 0.044
+pass 3/4 step 81/128 lr 1.508e-06 reward 0.035
+pass 3/4 step 82/128 lr 1.451e-06 reward 0.042
+pass 3/4 step 83/128 lr 1.395e-06 reward 0.050
+pass 3/4 step 84/128 lr 1.340e-06 reward 0.044
+pass 3/4 step 85/128 lr 1.286e-06 reward 0.045
+pass 3/4 step 86/128 lr 1.232e-06 reward 0.046
+pass 3/4 step 87/128 lr 1.179e-06 reward 0.048
+pass 3/4 step 88/128 lr 1.127e-06 reward 0.046
+pass 3/4 step 89/128 lr 1.076e-06 reward 0.045
+pass 3/4 step 90/128 lr 1.026e-06 reward 0.053
+pass 3/4 step 91/128 lr 9.761e-07 reward 0.047
+pass 3/4 step 92/128 lr 9.275e-07 reward 0.050
+pass 3/4 step 93/128 lr 8.799e-07 reward 0.043
+pass 3/4 step 94/128 lr 8.333e-07 reward 0.046
+pass 3/4 step 95/128 lr 7.877e-07 reward 0.046
+pass 3/4 step 96/128 lr 7.432e-07 reward 0.043
+saved pass 3 checkpoint to /outputs/grpo_oldreward/pass_03.pt
+pass 4/4 step 97/128 lr 6.997e-07 reward 0.046
+pass 4/4 step 98/128 lr 6.574e-07 reward 0.048
+pass 4/4 step 99/128 lr 6.162e-07 reward 0.058
+pass 4/4 step 100/128 lr 5.761e-07 reward 0.039
+pass 4/4 step 101/128 lr 5.372e-07 reward 0.042
+pass 4/4 step 102/128 lr 4.995e-07 reward 0.055
+pass 4/4 step 103/128 lr 4.630e-07 reward 0.046
+pass 4/4 step 104/128 lr 4.278e-07 reward 0.046
+pass 4/4 step 105/128 lr 3.938e-07 reward 0.048
+pass 4/4 step 106/128 lr 3.612e-07 reward 0.043
+pass 4/4 step 107/128 lr 3.298e-07 reward 0.041
+pass 4/4 step 108/128 lr 2.998e-07 reward 0.042
+pass 4/4 step 109/128 lr 2.711e-07 reward 0.057
+pass 4/4 step 110/128 lr 2.438e-07 reward 0.036
+pass 4/4 step 111/128 lr 2.178e-07 reward 0.051
+pass 4/4 step 112/128 lr 1.933e-07 reward 0.049
+pass 4/4 step 113/128 lr 1.701e-07 reward 0.040
+pass 4/4 step 114/128 lr 1.484e-07 reward 0.048
+pass 4/4 step 115/128 lr 1.282e-07 reward 0.044
+pass 4/4 step 116/128 lr 1.093e-07 reward 0.050
+pass 4/4 step 117/128 lr 9.198e-08 reward 0.040
+pass 4/4 step 118/128 lr 7.610e-08 reward 0.054
+pass 4/4 step 119/128 lr 6.170e-08 reward 0.056
+pass 4/4 step 120/128 lr 4.879e-08 reward 0.049
+pass 4/4 step 121/128 lr 3.739e-08 reward 0.043
+pass 4/4 step 122/128 lr 2.749e-08 reward 0.051
+pass 4/4 step 123/128 lr 1.910e-08 reward 0.045
+pass 4/4 step 124/128 lr 1.223e-08 reward 0.048
+pass 4/4 step 125/128 lr 6.881e-09 reward 0.040
+pass 4/4 step 126/128 lr 3.059e-09 reward 0.054
+pass 4/4 step 127/128 lr 7.649e-10 reward 0.048
+pass 4/4 step 128/128 lr 0.000e+00 reward 0.051
+saved pass 4 checkpoint to /outputs/grpo_oldreward/pass_04.pt
+training complete: 8192 prompts, 32768 completions
+
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+
+[1ALoading weights:   0%|          | 0/272 [00:00<?, ?it/s]
+[1ALoading weights: 100%|██████████| 272/272 [00:00<00:00, 4123.00it/s]
+
+[1ALoading weights:   0%|          | 0/272 [00:00<?, ?it/s]
+[1ALoading weights: 100%|██████████| 272/272 [00:00<00:00, 3590.74it/s]
+
+[1ALoading weights:   0%|          | 0/272 [00:00<?, ?it/s]
+[1ALoading weights: 100%|██████████| 272/272 [00:00<00:00, 4049.09it/s]
+
+[1ALoading weights:   0%|          | 0/272 [00:00<?, ?it/s]
+[1ALoading weights: 100%|██████████| 272/272 [00:00<00:00, 3648.50it/s]
+
+[1ALoading weights:   0%|          | 0/272 [00:00<?, ?it/s]
+[1ALoading weights: 100%|██████████| 272/272 [00:00<00:00, 3154.67it/s]
+
+[1ALoading weights:   0%|          | 0/272 [00:00<?, ?it/s]
+[1ALoading weights: 100%|██████████| 272/272 [00:00<00:00, 3470.64it/s]
+
+[1ALoading weights:   0%|          | 0/272 [00:00<?, ?it/s]
+[1ALoading weights: 100%|██████████| 272/272 [00:00<00:00, 3638.36it/s]
+
+[1ALoading weights:   0%|          | 0/272 [00:00<?, ?it/s]
+[1ALoading weights: 100%|██████████| 272/272 [00:00<00:00, 3751.59it/s]
+
+[1ALoading weights:   0%|          | 0/272 [00:00<?, ?it/s]
+[1ALoading weights: 100%|██████████| 272/272 [00:00<00:00, 3373.30it/s]
+saved ab_results.json locally
+
+GSM8K test n=1319 — same math_verify scorer for every row
+base           exact_match=0.0083  parse_rate=0.4458
+new_pass_01    exact_match=0.0091  parse_rate=0.5019
+new_pass_02    exact_match=0.0083  parse_rate=0.5337
+new_pass_03    exact_match=0.0121  parse_rate=0.5542
+new_pass_04    exact_match=0.0083  parse_rate=0.5497
+old_pass_01    exact_match=0.0106  parse_rate=0.5140
+old_pass_02    exact_match=0.0099  parse_rate=0.5519
+old_pass_03    exact_match=0.0091  parse_rate=0.5474
+old_pass_04    exact_match=0.0068  parse_rate=0.5489
+Stopping app - local entrypoint completed.
+✓ App completed. View run at 
+https://modal.com/apps/mantissagithub/main/ap-AtiLLwJ1WFTY2GhHEO3j8C

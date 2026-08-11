@@ -6,7 +6,11 @@ OUTPUT_ROOT="${OUTPUT_ROOT:-runs}"
 BASELINE_RUN_ID="${BASELINE_RUN_ID:-grpo_baseline}"
 Q0_RUN_ID="${Q0_RUN_ID:-q0_grpo}"
 MOPD_RUN_ID="${MOPD_RUN_ID:-mopd}"
-EVAL_OUTPUT="${EVAL_OUTPUT:-eval_results.json}"
+EVAL_OUTPUT="${EVAL_OUTPUT:-experiments/q0_mopd/results/eval_results.json}"
+
+# the trainers do sibling imports (import train_grpo / import eval); those libs now live
+# in core/, so put it on the path before we launch anything
+export PYTHONPATH="$PWD/core:${PYTHONPATH:-}"
 
 # extra arguments are whitespace-separated and are never evaluated as shell code.
 read -r -a baseline_extra_args <<< "${BASELINE_EXTRA_ARGS:-}"
@@ -70,26 +74,26 @@ run_child() {
 }
 
 run_child "baseline grpo training" true \
-    "$PYTHON" -u train_grpo.py \
+    "$PYTHON" -u core/train_grpo.py \
     --output-dir "$OUTPUT_ROOT" \
     --run-id "$BASELINE_RUN_ID" \
     "${baseline_extra_args[@]}"
 
 run_child "q0 grpo training" true \
-    "$PYTHON" -u train_q0_grpo.py \
+    "$PYTHON" -u experiments/q0_mopd/train_q0_grpo.py \
     --output-dir "$OUTPUT_ROOT" \
     --run-id "$Q0_RUN_ID" \
     "${q0_extra_args[@]}"
 
 run_child "snapshot distillation" true \
-    "$PYTHON" -u train_mopd.py \
+    "$PYTHON" -u experiments/q0_mopd/train_mopd.py \
     --output-dir "$OUTPUT_ROOT" \
     --run-id "$MOPD_RUN_ID" \
     --q0-run-dir "$OUTPUT_ROOT/$Q0_RUN_ID" \
     "${mopd_extra_args[@]}"
 
 run_child "evaluation" false \
-    "$PYTHON" -u eval.py \
+    "$PYTHON" -u core/eval.py \
     --baseline-run-dir "$OUTPUT_ROOT/$BASELINE_RUN_ID" \
     --q0-run-dir "$OUTPUT_ROOT/$Q0_RUN_ID" \
     --mopd-run-dir "$OUTPUT_ROOT/$MOPD_RUN_ID" \

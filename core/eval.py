@@ -37,8 +37,8 @@ def load_test_set():
 
 
 def score_completion(text, gold_value):
-    pred, has_tag = tg.parse_answer(text)
-    correct = pred is not None and gold_value is not None and abs(pred - gold_value) < 1e-6
+    answer_str, has_tag = tg.parse_answer(text)
+    correct = tg.answer_is_correct(answer_str, gold_value)
     return correct, has_tag
 
 

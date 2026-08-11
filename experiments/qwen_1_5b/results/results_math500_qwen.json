@@ -1,0 +1,18 @@
+{
+  "eval": {
+    "base": {
+      "correct": 133,
+      "count": 500,
+      "accuracy": 0.266,
+      "parse_rate": 0.988
+    },
+    "pass_02": {
+      "correct": 158,
+      "count": 500,
+      "accuracy": 0.316,
+      "parse_rate": 0.994
+    }
+  },
+  "n": 500,
+  "dataset": "MATH-500"
+}

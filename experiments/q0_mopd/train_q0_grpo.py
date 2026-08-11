@@ -474,6 +474,7 @@ def self_test():
     assert long_target.endswith("<answer>42</answer>")
 
     contract_args = argparse.Namespace(
+        profile="smol135m", train_target=tg.GSM8K_TRAIN_TARGET,
         model_name=tg.MODEL_NAME, revision=tg.MODEL_REVISION, group_size=tg.GROUP_SIZE,
         temperature=tg.TEMPERATURE, top_p=tg.TOP_P, max_new_tokens=tg.MAX_NEW_TOKENS,
         prompt_batch_size=tg.PROMPT_BATCH_SIZE, micro_batch_size=tg.MICRO_BATCH_SIZE,

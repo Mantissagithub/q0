@@ -5,3 +5,4 @@ eval_results_live.json
 runs/
 .agents/
 .codex/
+.claude/
