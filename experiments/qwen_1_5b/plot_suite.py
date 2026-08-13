@@ -287,17 +287,23 @@ def main():
     save(fig, "07_math500_comparisons")
 
     gsm_full = load_json("passk_baseline_gsm8k.json")
-    val_count = json.loads((ROOT / "runs/mopd_qwen1_5b_laptop/validation_results.json").read_text())["validation_count"]
-    gsm_val = {"baseline_grpo": passk.get("baseline_grpo"), "q0": passk.get("q0_k3"), "mopd": None}
+    mopd_t2_val = json.loads((ROOT / "runs/mopd_qwen1_5b_laptop_t2/validation_results.json").read_text())
+    val_count = mopd_t2_val["validation_count"]
+    mopd_t2_best = max(mopd_t2_val["candidates"], key=lambda x: x["pass_at_8"])
+    gsm_val = {"baseline_grpo": passk.get("baseline_grpo"), "q0": passk.get("q0_k3"), "mopd": mopd_t2_best}
     gsm_full_value = gsm_full["result"].get("pass_at_1") if gsm_full else None
-    final = {"baseline_grpo": {"MATH-500": math_baseline, "GSM8K test": gsm_full_value}, "q0": {"MATH-500": math_q0, "GSM8K test": None}, "mopd": {"MATH-500": mathk, "GSM8K test": None}}
     fig, axes = plt.subplots(2, 2, figsize=(12, 8))
     methods = ["Baseline GRPO", "q0 top-2", "MOPD t=2"]
     colors = [COLORS["baseline"], COLORS["q0"], COLORS["mopd_t2"]]
 
-    gsm_val_methods = ["Baseline GRPO", "q0 top-3"]
-    gsm_val_values = [pct(gsm_val["baseline_grpo"]["result"].get("pass_at_1")), pct(gsm_val["q0"]["result"].get("pass_at_1"))]
-    axes[0, 0].bar(gsm_val_methods, gsm_val_values, color=colors[:2], width=0.62)
+    gsm_val_methods = ["Baseline GRPO", "q0 top-3", "MOPD t=2"]
+    gsm_val_colors = [COLORS["baseline"], COLORS["q0"], COLORS["mopd_t2"]]
+    gsm_val_values = [
+        pct(gsm_val["baseline_grpo"]["result"].get("pass_at_1")),
+        pct(gsm_val["q0"]["result"].get("pass_at_1")),
+        pct(gsm_val["mopd"]["pass_at_1"]),
+    ]
+    axes[0, 0].bar(gsm_val_methods, gsm_val_values, color=gsm_val_colors, width=0.62)
     style(axes[0, 0], "GSM8K validation — pass@1", ylabel="percent")
     axes[0, 0].text(0.01, 0.97, f"train validation slice, n={val_count}", transform=axes[0, 0].transAxes, va="top", fontsize=9, color="#555555")
 
