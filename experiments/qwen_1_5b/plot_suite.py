@@ -13,13 +13,38 @@ ROOT = Path(__file__).resolve().parents[2]
 RESULTS = ROOT / "experiments/q0_mopd/results"
 OUT = ROOT / "experiments/qwen_1_5b/figures"
 
+BG = "#F7F3EA"
+TEXT_DARK = "#1a1a1a"
+TEXT_GRAY = "#666666"
+
+plt.rcParams.update({
+    "figure.facecolor": BG,
+    "axes.facecolor": BG,
+    "savefig.facecolor": BG,
+    "axes.edgecolor": "#333333",
+    "axes.labelcolor": TEXT_DARK,
+    "xtick.color": TEXT_DARK,
+    "ytick.color": TEXT_DARK,
+    "text.color": TEXT_DARK,
+    "grid.color": "#dddddd",
+    "font.size": 11,
+})
+
 COLORS = {
-    "baseline": "#0072B2",
-    "q0": "#D55E00",
-    "mopd_t1": "#009E73",
-    "mopd_t2": "#CC79A7",
+    "baseline": "#4C6EF5",
+    "q0": "#F2994A",
+    "mopd_t1": "#2BAF8A",
+    "mopd_t2": "#8B5CF6",
     "metric": "#333333",
 }
+
+
+def subtitle(fig, text, y=0.9):
+    fig.text(0.01, y, text, fontsize=10.5, color=TEXT_GRAY, ha="left", va="top")
+
+
+def footnote(fig, text):
+    fig.text(0.01, 0.005, text, fontsize=9, color=TEXT_GRAY, ha="left", va="bottom", style="italic")
 
 
 def load_json(name):
@@ -48,9 +73,9 @@ def pct(value):
     return np.nan if value is None else 100 * float(value)
 
 
-def save(fig, name):
-    fig.tight_layout()
-    fig.savefig(OUT / f"{name}.png", dpi=180, bbox_inches="tight")
+def save(fig, name, top=0.90, bottom=0.06):
+    fig.tight_layout(rect=[0, bottom, 1, top])
+    fig.savefig(OUT / f"{name}.png", dpi=180, facecolor=BG)
     plt.close(fig)
 
 
@@ -63,21 +88,27 @@ def label_bars(ax, values, percent=False, precision=1):
         ax.text(bar.get_x() + bar.get_width() / 2, value + (1 if percent else max(abs(value) * 0.02, 0.005)), text, ha="center", va="bottom", fontsize=8)
 
 
-def label_line_points(ax, x, values, percent=False, every=None):
+def label_line_points(ax, x, values, percent=False, every=None, last_only=False, dy=5):
     for i, (x_value, value) in enumerate(zip(x, values)):
-        if not np.isfinite(value) or (every and i % every):
+        if not np.isfinite(value):
+            continue
+        if last_only:
+            if i != len(x) - 1:
+                continue
+        elif every and i % every:
             continue
         text = f"{value:.1f}%" if percent else f"{value:.3g}"
-        ax.annotate(text, (x_value, value), xytext=(0, 5), textcoords="offset points", ha="center", fontsize=7)
+        ax.annotate(text, (x_value, value), xytext=(0, dy), textcoords="offset points", ha="center", fontsize=7)
 
 
 def style(ax, title, xlabel=None, ylabel=None):
-    ax.set_title(title, loc="left", weight="bold")
+    ax.set_title(title, loc="left", weight="bold", fontsize=12, color=TEXT_DARK)
     if xlabel:
         ax.set_xlabel(xlabel)
     if ylabel:
         ax.set_ylabel(ylabel)
-    ax.grid(axis="y", alpha=0.2)
+    ax.grid(axis="y", alpha=0.5, color="#dddddd")
+    ax.set_axisbelow(True)
     ax.yaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{value:,.0f}" if abs(value) >= 1000 else f"{value:g}"))
     ax.spines[["top", "right"]].set_visible(False)
 
@@ -122,7 +153,9 @@ def main():
     for ax in axes.flat:
         for line in ax.lines:
             label_line_points(ax, line.get_xdata(), line.get_ydata(), every=max(1, len(line.get_xdata()) // 4))
-    save(fig, "01_q0_training_metrics")
+    fig.suptitle("Q0 training dynamics", x=0.01, y=0.97, ha="left", fontsize=18, weight="bold", color=TEXT_DARK)
+    subtitle(fig, "reward, learning rate, and schedule multipliers vs baseline GRPO - 1.5B QLoRA laptop run")
+    save(fig, "01_q0_training_metrics", top=0.87)
 
     mix = load_json("../runs/q0_qwen1_5b_laptop/mixture_weights.json")
     if mix is None:
@@ -131,10 +164,12 @@ def main():
     labels = [label.replace("checkpoint", "step ").replace("step step ", "step ") for label in labels]
     fig, ax = plt.subplots(figsize=(10, 5))
     bars = ax.bar(labels, mix["weights"], color=COLORS["q0"])
-    style(ax, "Q0 learned mixture weights", ylabel="weight")
+    style(ax, "", ylabel="weight")
     label_bars(ax, mix["weights"], precision=3)
     ax.tick_params(axis="x", rotation=45)
-    save(fig, "02_q0_mixture_weights")
+    fig.suptitle("Q0 learned mixture weights", x=0.01, y=0.97, ha="left", fontsize=18, weight="bold", color=TEXT_DARK)
+    subtitle(fig, "softmax importance weight learned per retained snapshot")
+    save(fig, "02_q0_mixture_weights", top=0.85)
     for k, top in mix.get("top_k", {}).items():
         summary.append(result_row("Q0 mixture", "training", "", f"q0_k{k}", "fit_loss", mix.get("fit_loss"), "runs/q0_qwen1_5b_laptop/mixture_weights.json"))
 
@@ -155,13 +190,16 @@ def main():
     for ax in axes.flat:
         for line in ax.lines:
             label_line_points(ax, line.get_xdata(), line.get_ydata(), every=max(1, len(line.get_xdata()) // 4))
-    save(fig, "03_mopd_training_metrics")
+    fig.suptitle("MOPD training dynamics", x=0.01, y=0.97, ha="left", fontsize=18, weight="bold", color=TEXT_DARK)
+    subtitle(fig, "loss, learning rate, and response length across on-policy distillation teachers t=1 and t=2")
+    save(fig, "03_mopd_training_metrics", top=0.87)
     for label, rows, source in [("mopd_t1", mopd_t1, "runs/mopd_qwen1_5b_laptop/training_metrics.jsonl"), ("mopd_t2", mopd_t2, "runs/mopd_qwen1_5b_laptop_t2/training_metrics.jsonl")]:
         for metric in ["loss", "lr", "avg_response_length", "completion_tokens"]:
             summary.append(result_row("training", "steps", len(rows), label, metric, rows[-1][metric], source))
 
     validations = [("MOPD t=1", ROOT / "runs/mopd_qwen1_5b_laptop/validation_results.json", COLORS["mopd_t1"]), ("MOPD t=2", ROOT / "runs/mopd_qwen1_5b_laptop_t2/validation_results.json", COLORS["mopd_t2"])]
     fig, axes = plt.subplots(1, 2, figsize=(12, 4.5))
+    label_dy = {"MOPD t=1": 8, "MOPD t=2": -18}
     for label, path, color in validations:
         data = json.loads(path.read_text())
         steps = [x["step"] for x in data["candidates"]]
@@ -170,9 +208,7 @@ def main():
         for key in ["parse_at_1", "parse_at_4", "parse_at_8"]:
             axes[1].plot(steps, [pct(x[key]) for x in data["candidates"]], marker="o", label=f"{label} {key.replace('_', '@')}", color=color, alpha={"parse_at_1": .55, "parse_at_4": .75, "parse_at_8": 1}[key])
         for key in ["pass_at_1", "pass_at_4", "pass_at_8"]:
-            label_line_points(axes[0], steps, [pct(x[key]) for x in data["candidates"]], percent=True)
-        for key in ["parse_at_1", "parse_at_4", "parse_at_8"]:
-            label_line_points(axes[1], steps, [pct(x[key]) for x in data["candidates"]], percent=True)
+            label_line_points(axes[0], steps, [pct(x[key]) for x in data["candidates"]], percent=True, last_only=True, dy=label_dy[label])
         for candidate in data["candidates"]:
             for key in ["pass_at_1", "pass_at_4", "pass_at_8", "parse_at_1", "parse_at_4", "parse_at_8"]:
                 summary.append(result_row("GSM8K", "train_val_slice", data["validation_count"], label, key, candidate[key], str(path.relative_to(ROOT))))
@@ -180,9 +216,12 @@ def main():
     style(axes[1], "GSM8K validation parse@k by checkpoint", "training step", "percent")
     axes[0].legend(fontsize=8, frameon=False, ncol=2)
     axes[1].legend(fontsize=8, frameon=False, ncol=2)
+    axes[1].text(0.01, 0.06, "all checkpoints parse 94-100% of samples", transform=axes[1].transAxes, fontsize=8, color="#555555")
     for ax in axes:
         ax.set_ylim(0, 105)
-    save(fig, "04_mopd_validation_curves")
+    fig.suptitle("MOPD GSM8K validation by checkpoint", x=0.01, y=0.97, ha="left", fontsize=18, weight="bold", color=TEXT_DARK)
+    subtitle(fig, "pass@k and parse@k on the 256-example held-out validation slice")
+    save(fig, "04_mopd_validation_curves", top=0.83)
 
     passk = {}
     for path in sorted(RESULTS.glob("passk_*_gsm8kval.json")):
@@ -194,17 +233,20 @@ def main():
     fig, axes = plt.subplots(1, 2, figsize=(11, 4.5))
     names = ["baseline_grpo", "q0_k1", "q0_k2", "q0_k3", "mopd_t2"]
     display_names = {"baseline_grpo": "Baseline GRPO", "q0_k1": "q0 top-1", "q0_k2": "q0 top-2", "q0_k3": "q0 top-3", "mopd_t2": "MOPD t=2"}
-    sweep_colors = {"baseline_grpo": COLORS["baseline"], "mopd_t2": COLORS["mopd_t2"]}
+    sweep_colors = {"baseline_grpo": COLORS["baseline"], "q0_k1": "#F7B267", "q0_k2": COLORS["q0"], "q0_k3": "#C96A1D", "mopd_t2": COLORS["mopd_t2"]}
+    dy_map = {"baseline_grpo": 8, "q0_k1": 26, "q0_k2": 8, "q0_k3": -10, "mopd_t2": -28}
+    parse_labeled = {"baseline_grpo", "q0_k2", "mopd_t2"}
     x = np.arange(3)
     for name in names:
         data = passk.get(name)
         color = sweep_colors.get(name, COLORS["q0"])
         vals = [pct(data["result"].get(k)) if data else np.nan for k in ["pass_at_1", "pass_at_4", "pass_at_8"]]
         axes[0].plot(x, vals, marker="o", label=display_names[name], color=color)
-        label_line_points(axes[0], x, vals, percent=True)
+        label_line_points(axes[0], x, vals, percent=True, dy=dy_map[name])
         parse = [pct(data["result"].get(k)) if data else np.nan for k in ["parse_at_1", "parse_at_4", "parse_at_8"]]
         axes[1].plot(x, parse, marker="o", label=display_names[name], color=color)
-        label_line_points(axes[1], x, parse, percent=True)
+        if name in parse_labeled:
+            label_line_points(axes[1], x, parse, percent=True, dy=dy_map[name])
         source = "runs/mopd_qwen1_5b_laptop_t2/validation_results.json" if name == "mopd_t2" else (f"experiments/q0_mopd/results/passk_{name}_gsm8kval.json" if data else "pending")
         for metric, value in zip(["pass_at_1", "pass_at_4", "pass_at_8", "parse_at_1", "parse_at_4", "parse_at_8"], (vals + parse)):
             summary.append(result_row("GSM8K", "train_val_slice", 256, name, metric, None if np.isnan(value) else value / 100, source, "available" if data else "missing"))
@@ -213,7 +255,9 @@ def main():
         ax.set_xticks(x, [f"pass@{k}" for k in keys])
         ax.set_ylim(0, 105)
         ax.legend(frameon=False)
-    save(fig, "05_q0_gsm8k_sweep")
+    fig.suptitle("Q0 GSM8K validation sweep", x=0.01, y=0.97, ha="left", fontsize=18, weight="bold", color=TEXT_DARK)
+    subtitle(fig, "pass@k and parse@k across mixture size, plus MOPD t=2 for reference - validation slice n=256")
+    save(fig, "05_q0_gsm8k_sweep", top=0.83)
 
     fig, axes = plt.subplots(1, 2, figsize=(11, 4.5))
     for name, color in [("mopd_t1", COLORS["mopd_t1"]), ("mopd_t2", COLORS["mopd_t2"])]:
@@ -228,27 +272,13 @@ def main():
     axes[0].set_ylim(0, 100); axes[1].set_ylim(0, 100)
     label_bars(axes[0], [pct(max(json.loads(path.read_text())["candidates"], key=lambda x: x["pass_at_8"])["pass_at_8"]) for _, path, _ in validations], percent=True)
     label_bars(axes[1], [pct(max(json.loads(path.read_text())["candidates"], key=lambda x: x["pass_at_8"])["pass_at_4"]) for _, path, _ in validations], percent=True)
-    save(fig, "06_mopd_t1_vs_t2")
+    fig.suptitle("MOPD teacher comparison", x=0.01, y=0.97, ha="left", fontsize=18, weight="bold", color=TEXT_DARK)
+    subtitle(fig, "best validation checkpoint by pass@8, t=1 vs t=2 - validation slice n=256")
+    save(fig, "06_mopd_t1_vs_t2", top=0.82)
 
-    math500 = load_json("math500_results.json")
     mathk = load_json("passk_mopd_best_math500.json")
     math_baseline = load_json("passk_baseline_math500.json")
     math_q0 = load_json("passk_q0_best_math500.json")
-    fig, axes = plt.subplots(2, 2, figsize=(12, 8))
-    historical = math500["results"] if math500 else {}
-    historical_names = {
-        "baseline_grpo": "Baseline",
-        "q0_best_single": "q0 single",
-        "q0_learned_top4": "q0 mixture",
-        "mopd": "MOPD",
-    }
-    for name, data in historical.items():
-        display_name = historical_names.get(name, name.replace("_", " "))
-        color = COLORS["baseline"] if "baseline" in name else COLORS["q0"] if "q0" in name else COLORS["mopd_t1"]
-        axes[0, 0].bar(display_name, pct(data.get("accuracy")), color=color)
-        axes[0, 1].bar(display_name, pct(data.get("parse_rate")), color=color)
-        summary.append(result_row("MATH-500", "test", 500, name, "accuracy_single_pass_historical", data.get("accuracy"), "math500_results.json"))
-        summary.append(result_row("MATH-500", "test", 500, name, "parse_rate_single_pass_historical", data.get("parse_rate"), "math500_results.json"))
 
     current = [
         (math_baseline, "Baseline GRPO", COLORS["baseline"], "passk_baseline_math500.json"),
@@ -259,7 +289,8 @@ def main():
     current_x = np.arange(len(current))
     pass_values = [pct(data["result"].get("pass_at_4")) if data else np.nan for data, _, _, _ in current]
     parse_values = [pct(data["result"].get("parse_at_4")) if data else np.nan for data, _, _, _ in current]
-    for ax, values in [(axes[1, 0], pass_values), (axes[1, 1], parse_values)]:
+    fig, axes = plt.subplots(1, 2, figsize=(11, 4.5))
+    for ax, values in [(axes[0], pass_values), (axes[1], parse_values)]:
         heights = [value if np.isfinite(value) else 0 for value in values]
         colors = [color if np.isfinite(value) else "#D9D9D9" for value, (_, _, color, _) in zip(values, current)]
         bars = ax.bar(current_x, heights, color=colors, width=0.62)
@@ -276,20 +307,14 @@ def main():
     if mathk:
         summary.append(result_row("MATH-500", "test", 500, "mopd_t2", "pass_at_4", mathk["result"].get("pass_at_4"), "passk_mopd_best_math500.json"))
 
-    panels = [
-        (axes[0, 0], "Historical single-pass accuracy"),
-        (axes[0, 1], "Historical single-pass parse rate"),
-        (axes[1, 0], "Current Qwen pass@4"),
-        (axes[1, 1], "Current Qwen parse@4"),
-    ]
-    for index, (ax, title) in enumerate(panels):
+    panels = [(axes[0], "MATH-500 pass@4"), (axes[1], "MATH-500 parse@4")]
+    for ax, title in panels:
         style(ax, title, ylabel="percent")
-        ax.tick_params(axis="x", rotation=15)
+        ax.tick_params(axis="x", rotation=10)
         ax.set_ylim(0, 110)
-        if index < 2:
-            label_bars(ax, [bar.get_height() for bar in ax.patches], percent=True)
-    fig.suptitle("MATH-500 comparison (test, n=500)", fontsize=16, weight="bold")
-    save(fig, "07_math500_comparisons")
+    fig.suptitle("MATH-500 comparison", x=0.01, y=0.97, ha="left", fontsize=18, weight="bold", color=TEXT_DARK)
+    subtitle(fig, "test split, n=500 - baseline vs q0 vs MOPD, four samples each")
+    save(fig, "07_math500_comparisons", top=0.82)
 
     gsm_full = load_json("passk_baseline_gsm8k.json")
     mopd_t2_val = json.loads((ROOT / "runs/mopd_qwen1_5b_laptop_t2/validation_results.json").read_text())
@@ -297,7 +322,7 @@ def main():
     mopd_t2_best = max(mopd_t2_val["candidates"], key=lambda x: x["pass_at_8"])
     gsm_val = {"baseline_grpo": passk.get("baseline_grpo"), "q0": passk.get("q0_k3"), "mopd": mopd_t2_best}
     gsm_full_value = gsm_full["result"].get("pass_at_1") if gsm_full else None
-    fig, axes = plt.subplots(2, 2, figsize=(12, 8))
+    fig, axes = plt.subplots(1, 3, figsize=(14, 5))
     methods = ["Baseline GRPO", "q0 top-2", "MOPD t=2"]
     colors = [COLORS["baseline"], COLORS["q0"], COLORS["mopd_t2"]]
 
@@ -308,31 +333,28 @@ def main():
         pct(gsm_val["q0"]["result"].get("pass_at_1")),
         pct(gsm_val["mopd"]["pass_at_1"]),
     ]
-    axes[0, 0].bar(gsm_val_methods, gsm_val_values, color=gsm_val_colors, width=0.62)
-    style(axes[0, 0], "GSM8K validation — pass@1", ylabel="percent")
-    axes[0, 0].text(0.01, 0.97, f"train validation slice, n={val_count}", transform=axes[0, 0].transAxes, va="top", fontsize=9, color="#555555")
-
-    gsm_test_value = pct(gsm_full_value)
-    axes[0, 1].bar(["Baseline GRPO"], [gsm_test_value], color=[COLORS["baseline"]], width=0.5)
-    style(axes[0, 1], "GSM8K test — pass@1", ylabel="percent")
-    axes[0, 1].text(0.01, 0.97, "full test set, n=1,319; q0/MOPD not evaluated", transform=axes[0, 1].transAxes, va="top", fontsize=9, color="#555555")
+    axes[0].bar(gsm_val_methods, gsm_val_values, color=gsm_val_colors, width=0.62)
+    style(axes[0], "GSM8K validation - pass@1", ylabel="percent")
+    axes[0].text(0.01, 0.97, f"train validation slice, n={val_count}", transform=axes[0].transAxes, va="top", fontsize=9, color="#555555")
 
     math_pass1 = [pct(x["result"].get("pass_at_1")) for x in [math_baseline, math_q0, mathk]]
-    axes[1, 0].bar(methods, math_pass1, color=colors, width=0.62)
-    style(axes[1, 0], "MATH-500 — pass@1", ylabel="percent")
-    axes[1, 0].text(0.01, 0.97, "test set, n=500", transform=axes[1, 0].transAxes, va="top", fontsize=9, color="#555555")
+    axes[1].bar(methods, math_pass1, color=colors, width=0.62)
+    style(axes[1], "MATH-500 - pass@1", ylabel="percent")
+    axes[1].text(0.01, 0.97, "test set, n=500", transform=axes[1].transAxes, va="top", fontsize=9, color="#555555")
 
     math_pass4 = [pct(x["result"].get("pass_at_4")) for x in [math_baseline, math_q0, mathk]]
-    axes[1, 1].bar(methods, math_pass4, color=colors, width=0.62)
-    style(axes[1, 1], "MATH-500 — pass@4", ylabel="percent")
-    axes[1, 1].text(0.01, 0.97, "test set, n=500", transform=axes[1, 1].transAxes, va="top", fontsize=9, color="#555555")
+    axes[2].bar(methods, math_pass4, color=colors, width=0.62)
+    style(axes[2], "MATH-500 - pass@4", ylabel="percent")
+    axes[2].text(0.01, 0.97, "test set, n=500", transform=axes[2].transAxes, va="top", fontsize=9, color="#555555")
 
-    for ax in axes.flat:
+    for ax in axes:
         ax.set_ylim(0, 105)
         ax.tick_params(axis="x", rotation=10)
         label_bars(ax, [bar.get_height() for bar in ax.patches], percent=True)
-    fig.suptitle("Qwen 1.5B experiment summary", fontsize=16, weight="bold")
-    save(fig, "08_final_experiment_comparison")
+    fig.suptitle("Qwen 1.5B experiment summary", x=0.01, y=0.97, ha="left", fontsize=18, weight="bold", color=TEXT_DARK)
+    subtitle(fig, "baseline vs q0 vs MOPD - every panel covers all three systems")
+    footnote(fig, "GSM8K full test set (n=1,319) was only run for baseline GRPO; see metrics_summary.csv for that single value.")
+    save(fig, "08_final_experiment_comparison", top=0.83)
     for method, data in [("baseline_grpo", math_baseline), ("q0", math_q0), ("mopd", mathk)]:
         for metric in ["pass_at_1", "pass_at_4"]:
             value = data["result"].get(metric) if data else None
@@ -342,7 +364,7 @@ def main():
     with (OUT / "metrics_summary.csv").open("w", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=["dataset", "split", "count", "method", "metric", "value", "source", "status"])
         writer.writeheader(); writer.writerows(summary)
-    (OUT / "README.md").write_text("""# Qwen 1.5B q0/MOPD graph suite\n\nRun `python experiments/qwen_1_5b/plot_suite.py` from the repository root. The script reads structured logs/results on every run and writes PNG figures plus `metrics_summary.csv` here. Training and sweep figures are independent of pending evaluations; comparison figures update automatically when pending pass-k JSON files appear.\n\n## Caveats\n\n- GSM8K checkpoint validation counts are read from each validation file; current files use their recorded `train_val_slice` count. GSM8K sweep files use their recorded count (currently 256). GSM8K full-test baseline, when available, is plotted in the summary only against itself because q0/MOPD full-test values are not available.\n- MATH-500 is the `test` split, count 500. Existing `math500_results.json` is a historical single-pass run with SmolLM2-135M metadata, so it is plotted separately from current Qwen pass@k results and must not be treated as a like-for-like Qwen comparison.\n- Missing pending values are left blank in the CSV and labeled `missing` in the figures.\n""")
+    (OUT / "README.md").write_text("""# Qwen 1.5B q0/MOPD graph suite\n\nRun `python experiments/qwen_1_5b/plot_suite.py` from the repository root. The script reads structured logs/results on every run and writes PNG figures plus `metrics_summary.csv` here. Training and sweep figures are independent of pending evaluations; comparison figures update automatically when pending pass-k JSON files appear.\n\n## Caveats\n\n- GSM8K checkpoint validation counts are read from each validation file; current files use their recorded `train_val_slice` count. GSM8K sweep files use their recorded count (currently 256). GSM8K full-test baseline, when available, is plotted in the summary only against itself because q0/MOPD full-test values are not available.\n- MATH-500 is the `test` split, count 500, current Qwen 1.5B pass@4/parse@4 only. `math500_results.json` (historical SmolLM2-135M single-pass run) is not plotted here - not comparable to the current Qwen pass@k results.\n- Missing pending values are left blank in the CSV and labeled `missing` in the figures.\n""")
 
 
 if __name__ == "__main__":

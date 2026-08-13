@@ -94,14 +94,6 @@ GSM8K,train_val_slice,256,mopd_t1,best_pass_at_8,0.828125,validation_results.jso
 GSM8K,train_val_slice,256,mopd_t1,best_pass_at_4,0.7315290178571427,validation_results.json,available
 GSM8K,train_val_slice,256,mopd_t2,best_pass_at_8,0.84765625,validation_results.json,available
 GSM8K,train_val_slice,256,mopd_t2,best_pass_at_4,0.7628906249999997,validation_results.json,available
-MATH-500,test,500,baseline_grpo,accuracy_single_pass_historical,0.01,math500_results.json,available
-MATH-500,test,500,baseline_grpo,parse_rate_single_pass_historical,0.83,math500_results.json,available
-MATH-500,test,500,q0_best_single,accuracy_single_pass_historical,0.01,math500_results.json,available
-MATH-500,test,500,q0_best_single,parse_rate_single_pass_historical,0.856,math500_results.json,available
-MATH-500,test,500,q0_learned_top4,accuracy_single_pass_historical,0.012,math500_results.json,available
-MATH-500,test,500,q0_learned_top4,parse_rate_single_pass_historical,0.826,math500_results.json,available
-MATH-500,test,500,mopd,accuracy_single_pass_historical,0.012,math500_results.json,available
-MATH-500,test,500,mopd,parse_rate_single_pass_historical,0.866,math500_results.json,available
 MATH-500,test,500,Baseline GRPO,pass_at_4,0.25,passk_baseline_math500.json,available
 MATH-500,test,500,q0 top-2,pass_at_4,0.39,passk_q0_best_math500.json,available
 MATH-500,test,500,MOPD t=2,pass_at_4,0.35,passk_mopd_best_math500.json,available
