@@ -189,20 +189,25 @@ def main():
         data = load_json(path.name)
         if data:
             passk[data["name"]] = data
+    mopd_sweep_best = max(json.loads((ROOT / "runs/mopd_qwen1_5b_laptop_t2/validation_results.json").read_text())["candidates"], key=lambda x: x["pass_at_8"])
+    passk["mopd_t2"] = {"result": mopd_sweep_best}
     fig, axes = plt.subplots(1, 2, figsize=(11, 4.5))
-    names = ["baseline_grpo", "q0_k1", "q0_k2", "q0_k3"]
-    display_names = {"baseline_grpo": "Baseline GRPO", "q0_k1": "q0 top-1", "q0_k2": "q0 top-2", "q0_k3": "q0 top-3"}
+    names = ["baseline_grpo", "q0_k1", "q0_k2", "q0_k3", "mopd_t2"]
+    display_names = {"baseline_grpo": "Baseline GRPO", "q0_k1": "q0 top-1", "q0_k2": "q0 top-2", "q0_k3": "q0 top-3", "mopd_t2": "MOPD t=2"}
+    sweep_colors = {"baseline_grpo": COLORS["baseline"], "mopd_t2": COLORS["mopd_t2"]}
     x = np.arange(3)
     for name in names:
         data = passk.get(name)
+        color = sweep_colors.get(name, COLORS["q0"])
         vals = [pct(data["result"].get(k)) if data else np.nan for k in ["pass_at_1", "pass_at_4", "pass_at_8"]]
-        axes[0].plot(x, vals, marker="o", label=display_names[name], color=COLORS["baseline"] if name == "baseline_grpo" else COLORS["q0"])
+        axes[0].plot(x, vals, marker="o", label=display_names[name], color=color)
         label_line_points(axes[0], x, vals, percent=True)
         parse = [pct(data["result"].get(k)) if data else np.nan for k in ["parse_at_1", "parse_at_4", "parse_at_8"]]
-        axes[1].plot(x, parse, marker="o", label=display_names[name], color=COLORS["baseline"] if name == "baseline_grpo" else COLORS["q0"])
+        axes[1].plot(x, parse, marker="o", label=display_names[name], color=color)
         label_line_points(axes[1], x, parse, percent=True)
+        source = "runs/mopd_qwen1_5b_laptop_t2/validation_results.json" if name == "mopd_t2" else (f"experiments/q0_mopd/results/passk_{name}_gsm8kval.json" if data else "pending")
         for metric, value in zip(["pass_at_1", "pass_at_4", "pass_at_8", "parse_at_1", "parse_at_4", "parse_at_8"], (vals + parse)):
-            summary.append(result_row("GSM8K", "train_val_slice", 256, name, metric, None if np.isnan(value) else value / 100, f"experiments/q0_mopd/results/passk_{name}_gsm8kval.json" if data else "pending", "available" if data else "missing"))
+            summary.append(result_row("GSM8K", "train_val_slice", 256, name, metric, None if np.isnan(value) else value / 100, source, "available" if data else "missing"))
     for ax, title, keys in [(axes[0], "GSM8K validation pass@k Q0 sweep", [1, 4, 8]), (axes[1], "GSM8K validation parse@k Q0 sweep", [1, 4, 8])]:
         style(ax, title, "k", "percent")
         ax.set_xticks(x, [f"pass@{k}" for k in keys])

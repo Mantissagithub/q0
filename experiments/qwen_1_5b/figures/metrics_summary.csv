@@ -84,6 +84,12 @@ GSM8K,train_val_slice,256,q0_k3,pass_at_8,0.8828125,experiments/q0_mopd/results/
 GSM8K,train_val_slice,256,q0_k3,parse_at_1,0.99462890625,experiments/q0_mopd/results/passk_q0_k3_gsm8kval.json,available
 GSM8K,train_val_slice,256,q0_k3,parse_at_4,1.0,experiments/q0_mopd/results/passk_q0_k3_gsm8kval.json,available
 GSM8K,train_val_slice,256,q0_k3,parse_at_8,1.0,experiments/q0_mopd/results/passk_q0_k3_gsm8kval.json,available
+GSM8K,train_val_slice,256,mopd_t2,pass_at_1,0.49072265625,runs/mopd_qwen1_5b_laptop_t2/validation_results.json,available
+GSM8K,train_val_slice,256,mopd_t2,pass_at_4,0.7628906249999997,runs/mopd_qwen1_5b_laptop_t2/validation_results.json,available
+GSM8K,train_val_slice,256,mopd_t2,pass_at_8,0.84765625,runs/mopd_qwen1_5b_laptop_t2/validation_results.json,available
+GSM8K,train_val_slice,256,mopd_t2,parse_at_1,0.9423828125,runs/mopd_qwen1_5b_laptop_t2/validation_results.json,available
+GSM8K,train_val_slice,256,mopd_t2,parse_at_4,0.9898995535714286,runs/mopd_qwen1_5b_laptop_t2/validation_results.json,available
+GSM8K,train_val_slice,256,mopd_t2,parse_at_8,0.9921875,runs/mopd_qwen1_5b_laptop_t2/validation_results.json,available
 GSM8K,train_val_slice,256,mopd_t1,best_pass_at_8,0.828125,validation_results.json,available
 GSM8K,train_val_slice,256,mopd_t1,best_pass_at_4,0.7315290178571427,validation_results.json,available
 GSM8K,train_val_slice,256,mopd_t2,best_pass_at_8,0.84765625,validation_results.json,available
