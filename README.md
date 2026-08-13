@@ -17,7 +17,7 @@ this was a small systems check, not a compute-matched benchmark. the baseline re
 
 [baseline checkpoints](https://huggingface.co/Pradheep1647/q0-gsm8k-135m-baseline) · [q0 snapshots and weights](https://huggingface.co/Pradheep1647/q0-gsm8k-135m) · [distilled checkpoint](https://huggingface.co/Pradheep1647/q0-gsm8k-135m-mopd)
 
-![q0 pipeline](q0.png)
+![q0 pipeline](experiments/q0_mopd/figures/q0.png)
 
 ### GSM8K exact match and pass@k
 
@@ -32,13 +32,13 @@ the original full-test evaluation used all 1,319 GSM8K test questions. exact mat
 | uniform ensemble, k=8 | 12/1319 | 0.910% | — | — | — |
 | distilled student, selected at step 8 | 12/1319 | 0.910% | 0.51% | 1.94% | 3.64% |
 
-![checkpoint accuracy comparison](checkpoint_accuracy_comparison.png)
+![checkpoint accuracy comparison](experiments/q0_mopd/figures/checkpoint_accuracy_comparison.png)
 
-![training reward comparison](training_reward_comparison.png)
+![training reward comparison](experiments/q0_mopd/figures/training_reward_comparison.png)
 
-![ensemble comparison](ensemble_comparison.png)
+![ensemble comparison](experiments/q0_mopd/figures/ensemble_comparison.png)
 
-![learned mixture weights](mixture_weights_comparison.png)
+![learned mixture weights](experiments/q0_mopd/figures/mixture_weights_comparison.png)
 
 ### MOPD
 
@@ -52,11 +52,11 @@ $$
 
 The student ran one pass over 2,048 prompts and saved candidates at steps 8, 16, 24, and 32. selection used a fresh 512-question slice from the unused GSM8K training remainder. step 8 won with 5.47% validation pass@8, but that validation choice did not produce a pass@k win on the official test split.
 
-![distillation training curves](mopd_training_curves.png)
+![distillation training curves](experiments/q0_mopd/figures/mopd_training_curves.png)
 
-![distilled checkpoint validation](mopd_validation_comparison.png)
+![distilled checkpoint validation](experiments/q0_mopd/figures/mopd_validation_comparison.png)
 
-![final distilled checkpoint comparison](mopd_final_comparison.png)
+![final distilled checkpoint comparison](experiments/q0_mopd/figures/mopd_final_comparison.png)
 
 ### MATH-500 transfer
 
@@ -69,7 +69,7 @@ the same selected 135M checkpoints were evaluated on all 500 MATH-500 problems w
 | q0 learned top-4 | 6/500 | 1.2% | 82.6% | 111.5 tokens | 17m 02s | 8.36 GiB |
 | distilled student | 6/500 | 1.2% | 86.6% | 118.6 tokens | 4m 27s | 0.84 GiB |
 
-![math-500 comparison](math500_comparison.png)
+![math-500 comparison](experiments/q0_mopd/figures/math500_comparison.png)
 
 these are floor-level results. the learned top-4 and distilled student each solved 6/500, only one more than baseline. every system scored zero on counting, probability, and number theory. the transfer result agrees with GSM8K: q0-style ensembling and distillation work mechanically, but this 135M base is too weak to separate the methods reliably.
 
