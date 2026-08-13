@@ -25,8 +25,101 @@ UNIFORM_K_VALUES = [2, 4, 8]
 # full-run baseline_checkpoint_count = 16
 BASELINE_CHECKPOINT_COUNT = 4
 # full-run q0_snapshot_count = 16
-Q0_SNAPSHOT_COUNT = 8
+Q0_SNAPSHOT_COUNT = 5
 PASS_K_VALUES = (1, 4, 8)
+FINAL_MANIFEST_SCHEMA = 1
+FINAL_SYSTEM_NAMES = ("baseline_grpo", "q0_best_single", "q0_learned_top4", "mopd")
+
+
+def sha256_file(path):
+    digest = hashlib.sha256()
+    with open(path, "rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _manifest_path(manifest_dir, value):
+    if not isinstance(value, str) or not value:
+        raise ValueError("manifest checkpoint paths must be nonempty strings")
+    path = os.path.abspath(os.path.join(manifest_dir, value))
+    if not os.path.isfile(path):
+        raise ValueError(f"manifest checkpoint is missing: {path}")
+    return path
+
+
+def load_final_manifest(path, model_name, revision):
+    path = os.path.abspath(path)
+    with open(path) as handle:
+        payload = json.load(handle)
+    if payload.get("schema_version") != FINAL_MANIFEST_SCHEMA:
+        raise ValueError("unsupported final manifest schema")
+    model = payload.get("model")
+    if not isinstance(model, dict) or model.get("name") != model_name or model.get("revision") != revision:
+        raise ValueError("final manifest model does not match evaluator arguments")
+    systems = payload.get("systems")
+    if not isinstance(systems, dict) or set(systems) != set(FINAL_SYSTEM_NAMES):
+        raise ValueError("final manifest must declare exactly the four final systems")
+    root = os.path.dirname(path)
+    resolved = {}
+    for name in FINAL_SYSTEM_NAMES:
+        entry = systems[name]
+        kind = entry.get("type")
+        if kind == "single":
+            checkpoint = entry.get("checkpoint")
+            if not isinstance(checkpoint, dict):
+                raise ValueError(f"manifest system {name} needs a checkpoint")
+            checkpoint_path = _manifest_path(root, checkpoint.get("path"))
+            if checkpoint.get("sha256") != sha256_file(checkpoint_path):
+                raise ValueError(f"manifest hash mismatch for {name}")
+            resolved[name] = {"type": kind, "path": checkpoint_path}
+        elif kind == "ensemble":
+            members = entry.get("members")
+            if not isinstance(members, list) or not members:
+                raise ValueError(f"manifest system {name} needs ensemble members")
+            paths, weights = [], []
+            for member in members:
+                member_path = _manifest_path(root, member.get("path"))
+                if member.get("sha256") != sha256_file(member_path):
+                    raise ValueError(f"manifest hash mismatch for {name}")
+                paths.append(member_path)
+                weights.append(float(member.get("weight")))
+            if len(set(paths)) != len(paths) or any(w < 0 or not math.isfinite(w) for w in weights):
+                raise ValueError(f"invalid ensemble members for {name}")
+            if not math.isclose(math.fsum(weights), 1.0, abs_tol=1e-9):
+                raise ValueError(f"ensemble weights for {name} must sum to one")
+            resolved[name] = {"type": kind, "paths": paths, "weights": weights}
+        else:
+            raise ValueError(f"unknown manifest system type for {name}")
+    return payload, resolved, sha256_file(path)
+
+
+def _manifest_checkpoint(path, manifest_dir):
+    return {"path": os.path.relpath(path, manifest_dir), "sha256": sha256_file(path)}
+
+
+def freeze_final_manifest(path, baseline_run_dir, q0_run_dir, mopd_run_dir, model_name, revision):
+    baseline = os.path.join(baseline_run_dir, "pass_04.pt")
+    if not os.path.isfile(baseline):
+        raise ValueError(f"missing baseline terminal checkpoint: {baseline}")
+    with open(os.path.join(q0_run_dir, "mixture_weights.json")) as handle:
+        mixture = json.load(handle)
+    names = mixture["snapshot_paths"]
+    weights = mixture["weights"]
+    top1 = mixture["top_k"]["1"]["snapshot_paths"][0]
+    top4 = mixture["top_k"]["4"]
+    manifest_dir = os.path.dirname(os.path.abspath(path))
+    systems = {
+        "baseline_grpo": {"type": "single", "checkpoint": _manifest_checkpoint(baseline, manifest_dir), "selection": "terminal_pass_fixed_a_priori"},
+        "q0_best_single": {"type": "single", "checkpoint": _manifest_checkpoint(os.path.join(q0_run_dir, top1), manifest_dir), "selection": "fitness_top_k_1"},
+        "q0_learned_top4": {"type": "ensemble", "members": []},
+        "mopd": {"type": "single", "checkpoint": _manifest_checkpoint(os.path.join(mopd_run_dir, "opsd.pt"), manifest_dir), "selection": "validation_results.json"},
+    }
+    for name, weight in zip(top4["snapshot_paths"], top4["weights"]):
+        systems["q0_learned_top4"]["members"].append({"weight": weight, **_manifest_checkpoint(os.path.join(q0_run_dir, name), manifest_dir)})
+    payload = {"schema_version": FINAL_MANIFEST_SCHEMA, "model": {"name": model_name, "revision": revision}, "validation": {"source": "GSM8K train split; frozen before official test evaluation"}, "systems": systems}
+    tg.atomic_json_dump(payload, path)
+    return path
 
 
 def load_test_set():
@@ -76,8 +169,8 @@ def select_top_k(weights, snapshot_names, k):
 
 def validate_top_k_manifest(top_k, weights, snapshot_names):
     required_keys = {str(k) for k in LEARNED_K_VALUES}
-    if not isinstance(top_k, dict) or set(top_k) != required_keys:
-        raise ValueError("mixture_weights.json top_k must contain exactly keys 1, 2, 4, and 8")
+    if not isinstance(top_k, dict) or not required_keys.issubset(top_k):
+        raise ValueError("mixture_weights.json top_k is missing required mixture sizes")
 
     tolerance = 1e-12
     for k in LEARNED_K_VALUES:
@@ -86,7 +179,9 @@ def validate_top_k_manifest(top_k, weights, snapshot_names):
             raise ValueError(f"mixture_weights.json top_k[{k}] must be an object")
         entry_names = entry.get("snapshot_paths")
         entry_weights = entry.get("weights")
-        expected_names, expected_weights = select_top_k(weights, snapshot_names, k)
+        expected_names, expected_weights = select_top_k(
+            weights, snapshot_names, min(k, len(snapshot_names))
+        )
         if entry_names != expected_names:
             raise ValueError(f"mixture_weights.json top_k[{k}] snapshot_paths do not match learned ranking")
         if not isinstance(entry_weights, list) or len(entry_weights) != len(expected_weights):
@@ -314,15 +409,16 @@ def validate_checkpoint_inputs(args):
     q0_paths = sorted(glob.glob(os.path.join(args.q0_run_dir, "traj*_cycle*.pt")))
     expected_counts = {
         "baseline pass": BASELINE_CHECKPOINT_COUNT,
-        "q0 snapshot": Q0_SNAPSHOT_COUNT,
     }
-    for label, paths in (("baseline pass", baseline_paths), ("q0 snapshot", q0_paths)):
+    for label, paths in (("baseline pass", baseline_paths),):
         expected_count = expected_counts[label]
         if len(paths) != expected_count:
             raise ValueError(f"expected exactly {expected_count} {label} paths, found {len(paths)}")
-        missing = [path for path in paths if not os.path.isfile(path)]
-        if missing:
-            raise ValueError(f"{label} paths must all exist: {missing}")
+    if not 1 <= len(q0_paths) <= Q0_SNAPSHOT_COUNT:
+        raise ValueError(f"expected 1-{Q0_SNAPSHOT_COUNT} q0 snapshot paths, found {len(q0_paths)}")
+    missing = [path for path in baseline_paths if not os.path.isfile(path)]
+    if missing:
+        raise ValueError(f"baseline pass paths must all exist: {missing}")
 
     mixture_path = os.path.join(args.q0_run_dir, "mixture_weights.json")
     if not os.path.isfile(mixture_path):
@@ -333,16 +429,16 @@ def validate_checkpoint_inputs(args):
     weights = mixture.get("weights")
     if not isinstance(snapshot_names, list) or not isinstance(weights, list):
         raise ValueError("mixture_weights.json must contain snapshot_paths and weights lists")
-    if len(snapshot_names) != Q0_SNAPSHOT_COUNT or len(weights) != Q0_SNAPSHOT_COUNT:
+    if not 1 <= len(snapshot_names) <= Q0_SNAPSHOT_COUNT or len(weights) != len(snapshot_names):
         raise ValueError(
-            f"mixture_weights.json must contain exactly {Q0_SNAPSHOT_COUNT} snapshot paths and {Q0_SNAPSHOT_COUNT} weights"
+            f"mixture_weights.json must contain 1-{Q0_SNAPSHOT_COUNT} snapshot paths and matching weights"
         )
-    if len(set(snapshot_names)) != Q0_SNAPSHOT_COUNT or any(not isinstance(name, str) for name in snapshot_names):
-        raise ValueError(f"mixture_weights.json snapshot paths must be {Q0_SNAPSHOT_COUNT} unique names")
+    if len(set(snapshot_names)) != len(snapshot_names) or any(not isinstance(name, str) for name in snapshot_names):
+        raise ValueError(f"mixture_weights.json snapshot paths must be 1-{Q0_SNAPSHOT_COUNT} unique names")
     if any(os.path.basename(name) != name for name in snapshot_names):
         raise ValueError("mixture_weights.json snapshot paths must be file names, not directories")
     if set(snapshot_names) != {os.path.basename(path) for path in q0_paths}:
-        raise ValueError(f"mixture_weights.json snapshot paths must match the {Q0_SNAPSHOT_COUNT} q0 snapshots")
+        raise ValueError("mixture_weights.json snapshot paths must match the q0 snapshots")
     try:
         weights = [float(weight) for weight in weights]
     except (TypeError, ValueError) as exc:
@@ -543,7 +639,40 @@ def run_mopd_only_eval(args):
         evaluate_winner_pass_at_k(args, metadata, results, tokenizer, test_set, device)
 
 
+def run_manifest_eval(args):
+    if args.compare_winners:
+        raise ValueError("--compare-winners is not allowed in manifest mode")
+    payload, systems, manifest_sha256 = load_final_manifest(args.manifest, args.model_name, args.revision)
+    device = args.device
+    tokenizer = tg.load_tokenizer(args.model_name, args.revision)
+    test_set = load_test_set()
+    metadata = make_metadata(args, len(test_set), {"manifest_sha256": manifest_sha256})
+    metadata["manifest_schema_version"] = payload["schema_version"]
+    results = {}
+    for name in FINAL_SYSTEM_NAMES:
+        if name in results:
+            continue
+        spec = systems[name]
+        if spec["type"] == "single":
+            model = tg.load_model_from_checkpoint(args.model_name, args.revision, spec["path"], device)
+            value = evaluate_single_model(model, tokenizer, test_set, args.batch_size, args.max_new_tokens, device, source=spec["path"])
+        else:
+            value = evaluate_ensemble(spec["paths"], spec["weights"], args, tokenizer, test_set, device, label=name)
+        results[name] = value
+        save_result(args.output, metadata, results, name, value)
+    print(f"wrote manifest-driven eval results to {args.output}")
+
+
 def run_eval(args):
+    if args.manifest:
+        run_manifest_eval(args)
+        return
+    if args.freeze_manifest:
+        if not args.mopd_run_dir:
+            raise ValueError("--freeze-manifest requires --mopd-run-dir")
+        freeze_final_manifest(args.output, args.baseline_run_dir, args.q0_run_dir, args.mopd_run_dir, args.model_name, args.revision)
+        print(f"wrote frozen final manifest to {args.output}")
+        return
     if args.mopd_only:
         run_mopd_only_eval(args)
         return
@@ -620,7 +749,7 @@ def run_eval(args):
     for k in LEARNED_K_VALUES:
         learned_key = f"q0_learned_prior_k{k}"
         if learned_key not in results:
-            names, learned_w = select_top_k(weights, snapshot_names, k)
+            names, learned_w = select_top_k(weights, snapshot_names, min(k, len(snapshot_names)))
             paths = [os.path.join(args.q0_run_dir, name) for name in names]
             value = evaluate_ensemble(
                 paths, learned_w, args, tokenizer, test_set, device, label=f"learned_prior_k{k}",
@@ -630,7 +759,7 @@ def run_eval(args):
             uniform_key = f"q0_uniform_k{k}"
             if uniform_key in results:
                 continue
-            names, uniform_w = select_first_k(snapshot_names, k)
+            names, uniform_w = select_first_k(snapshot_names, min(k, len(snapshot_names)))
             paths = [os.path.join(args.q0_run_dir, name) for name in names]
             value = evaluate_ensemble(
                 paths, uniform_w, args, tokenizer, test_set, device, label=f"uniform_k{k}",
@@ -650,6 +779,8 @@ def build_arg_parser():
     parser.add_argument("--baseline-run-dir", default=os.path.join("runs", "grpo_baseline"))
     parser.add_argument("--q0-run-dir", default=os.path.join("runs", "q0_grpo"))
     parser.add_argument("--mopd-run-dir", default=None)
+    parser.add_argument("--manifest", default=None, help="frozen final-system manifest")
+    parser.add_argument("--freeze-manifest", action="store_true")
     parser.add_argument("--output", default="eval_results.json")
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--max-new-tokens", type=int, default=tg.MAX_NEW_TOKENS)
@@ -715,7 +846,7 @@ def self_test():
     assert LEARNED_K_VALUES == [1, 2, 4, 8]
     assert UNIFORM_K_VALUES == [2, 4, 8]
     assert BASELINE_CHECKPOINT_COUNT == 4
-    assert Q0_SNAPSHOT_COUNT == 8
+    assert Q0_SNAPSHOT_COUNT == 5
 
     prompt_mask = torch.tensor([[0, 0, 1, 1], [0, 1, 1, 1]])
     assert position_ids_from_attention_mask(prompt_mask).tolist() == [[1, 1, 0, 1], [1, 0, 1, 2]]
@@ -806,20 +937,23 @@ def self_test():
             with open(os.path.join(baseline_dir, f"pass_{pass_num:02d}.pt"), "wb") as f:
                 f.write(b"baseline")
         snapshot_names = []
-        for trajectory in range(1, 3):
-            for cycle in range(1, 5):
-                name = f"traj{trajectory}_cycle{cycle:02d}.pt"
-                snapshot_names.append(name)
-                with open(os.path.join(q0_dir, name), "wb") as f:
-                    f.write(b"q0")
+        for cycle in range(1, Q0_SNAPSHOT_COUNT + 1):
+            name = f"traj1_cycle{cycle:02d}.pt"
+            snapshot_names.append(name)
+            with open(os.path.join(q0_dir, name), "wb") as f:
+                f.write(b"q0")
         learned_weights = [1.0] * Q0_SNAPSHOT_COUNT
         mixture = {
             "snapshot_paths": snapshot_names,
             "weights": learned_weights,
             "top_k": {
                 str(k): {
-                    "snapshot_paths": select_top_k(learned_weights, snapshot_names, k)[0],
-                    "weights": select_top_k(learned_weights, snapshot_names, k)[1],
+                    "snapshot_paths": select_top_k(
+                        learned_weights, snapshot_names, min(k, Q0_SNAPSHOT_COUNT)
+                    )[0],
+                    "weights": select_top_k(
+                        learned_weights, snapshot_names, min(k, Q0_SNAPSHOT_COUNT)
+                    )[1],
                 }
                 for k in LEARNED_K_VALUES
             },

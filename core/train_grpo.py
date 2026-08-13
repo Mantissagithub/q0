@@ -64,6 +64,31 @@ PROFILES = {
         "num_passes": NUM_PASSES,
         "train_target": GSM8K_TRAIN_TARGET,
     },
+    "qwen1_5b_laptop": {
+        "model_name": "Qwen/Qwen2.5-1.5B-Instruct",
+        "revision": "989aa7980e4cf806f80c7fef2b1adb7bc71aa306",
+        "group_size": 2,
+        "temperature": 0.8,
+        "top_p": 0.95,
+        "max_new_tokens": 192,
+        "prompt_batch_size": 1,
+        "micro_batch_size": 1,
+        "lr": 2e-5,
+        "weight_decay": 0.0,
+        "clip_epsilon": 0.2,
+        "num_passes": 1,
+        "train_target": 256,
+        "cycles": 4,
+        "num_initializations": 1,
+        "max_snapshots": 5,
+        "validation_target": 256,
+        "teacher_count": 1,
+        "quantization": "4bit",
+        "lora_rank": 8,
+        "lora_alpha": 16,
+        "lora_dropout": 0.05,
+        "teacher_count": 1,
+    },
     "qwen1_5b": {
         "model_name": "Qwen/Qwen2.5-1.5B-Instruct",
         "revision": "989aa7980e4cf806f80c7fef2b1adb7bc71aa306",
@@ -309,6 +334,9 @@ def immutable_training_contract(args):
         "weight_decay": args.weight_decay,
         "clip_epsilon": args.clip_epsilon,
         "device": args.device,
+        "profile": getattr(args, "profile", "smol135m"),
+        "quantization": getattr(args, "quantization", None),
+        "lora_rank": getattr(args, "lora_rank", None),
     }
 
 
@@ -365,6 +393,8 @@ def load_gsm8k_splits(seed=GSM8K_SEED, held_out=GSM8K_HELD_OUT, train_target=GSM
     # is loaded exclusively by eval.py
     from datasets import load_dataset
 
+    if held_out < 0 or train_target <= 0:
+        raise ValueError("held_out must be nonnegative and train_target must be positive")
     ds = load_dataset(GSM8K_DATASET, "main", split="train")
     ds = ds.shuffle(seed=seed)
     held_out_examples = ds.select(range(held_out))
@@ -386,10 +416,14 @@ def _require_transformers():
 
 
 def resolve_attn_implementation():
+    # Prefer SDPA locally: a partially installed flash-attn module can import
+    # successfully while lacking distribution metadata required by Transformers.
     try:
+        from importlib.metadata import PackageNotFoundError, version
         import flash_attn  # noqa: F401
+        version("flash-attn")
         return "flash_attention_2"
-    except ImportError:
+    except (ImportError, ModuleNotFoundError, PackageNotFoundError, ValueError, StopIteration):
         return "sdpa"
 
 
@@ -403,31 +437,76 @@ def load_tokenizer(model_name=MODEL_NAME, revision=MODEL_REVISION):
     return tokenizer
 
 
-def load_base_model(model_name=MODEL_NAME, revision=MODEL_REVISION, device="cuda"):
+def load_base_model(model_name=MODEL_NAME, revision=MODEL_REVISION, device="cuda",
+                    quantization=None, lora_rank=None, lora_alpha=None, lora_dropout=0.05):
     _require_transformers()
     from transformers import AutoModelForCausalLM
 
-    model = AutoModelForCausalLM.from_pretrained(
-        model_name,
-        revision=revision,
-        torch_dtype=torch.bfloat16,
-        attn_implementation=resolve_attn_implementation(),
-    ).to(device)
+    kwargs = {
+        "revision": revision,
+        "torch_dtype": torch.bfloat16,
+        "attn_implementation": resolve_attn_implementation(),
+    }
+    if quantization == "4bit":
+        try:
+            from transformers import BitsAndBytesConfig
+            from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
+        except ImportError as exc:
+            raise RuntimeError("qwen1_5b_laptop requires bitsandbytes and peft") from exc
+        kwargs["quantization_config"] = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_use_double_quant=True,
+            bnb_4bit_compute_dtype=torch.bfloat16,
+        )
+        model = AutoModelForCausalLM.from_pretrained(model_name, **kwargs)
+        model = prepare_model_for_kbit_training(model)
+        model = get_peft_model(model, LoraConfig(
+            r=lora_rank or 8, lora_alpha=lora_alpha or 16, lora_dropout=lora_dropout,
+            bias="none", task_type="CAUSAL_LM",
+            target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
+        ))
+    else:
+        model = AutoModelForCausalLM.from_pretrained(model_name, **kwargs).to(device)
     return model
 
 
-def build_model_and_tokenizer(model_name=MODEL_NAME, revision=MODEL_REVISION, device="cuda"):
+def build_model_and_tokenizer(model_name=MODEL_NAME, revision=MODEL_REVISION, device="cuda",
+                              quantization=None, lora_rank=None, lora_alpha=None, lora_dropout=0.05):
     tokenizer = load_tokenizer(model_name, revision)
-    model = load_base_model(model_name, revision, device)
+    model = load_base_model(model_name, revision, device, quantization, lora_rank, lora_alpha, lora_dropout)
     model.gradient_checkpointing_enable()
     model.config.use_cache = False
     return model, tokenizer
 
 
-def load_model_from_checkpoint(model_name, revision, ckpt_path, device):
-    model = load_base_model(model_name, revision, device)
-    state_dict = torch.load(ckpt_path, map_location=device, weights_only=True)
-    model.load_state_dict({k: v.to(model.dtype) for k, v in state_dict.items()})
+def save_adapter(model, path):
+    # QLoRA snapshots are adapter-only: the frozen 4-bit base never changes, so we
+    # persist just the LoRA weights. Full model.state_dict() on a 4-bit PEFT model
+    # serializes packed Params4bit tensors, which do not round-trip reliably.
+    from peft import get_peft_model_state_dict
+
+    adapter_state = get_peft_model_state_dict(model)
+    atomic_torch_save(
+        {k: v.detach().to(torch.bfloat16).cpu() for k, v in adapter_state.items()}, path
+    )
+
+
+def load_model_from_checkpoint(model_name, revision, ckpt_path, device,
+                               quantization=None, lora_rank=None, lora_alpha=None, lora_dropout=0.05):
+    model = load_base_model(model_name, revision, device, quantization, lora_rank, lora_alpha, lora_dropout)
+    state_dict = torch.load(ckpt_path, map_location="cpu", weights_only=True)
+    if quantization == "4bit":
+        from peft import set_peft_model_state_dict
+
+        set_peft_model_state_dict(
+            model, {k: v.to(device=device) for k, v in state_dict.items()}
+        )
+    else:
+        model.load_state_dict({k: v.to(device=device, dtype=model.dtype) for k, v in state_dict.items()})
+    del state_dict
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
     model.eval()
     return model
 
@@ -598,6 +677,10 @@ def sequence_logprobs(model, input_ids, attention_mask, completion_mask):
 def add_common_args(parser):
     parser.add_argument("--profile", choices=sorted(PROFILES), default="smol135m")
     parser.add_argument("--rollout", choices=["hf", "vllm"], default="hf")
+    parser.add_argument("--quantization", choices=["none", "4bit"], default="none")
+    parser.add_argument("--lora-rank", type=int, default=None)
+    parser.add_argument("--lora-alpha", type=int, default=None)
+    parser.add_argument("--lora-dropout", type=float, default=0.05)
     parser.add_argument("--train-target", type=int, default=GSM8K_TRAIN_TARGET)
     parser.add_argument("--model-name", default=MODEL_NAME)
     parser.add_argument("--revision", default=MODEL_REVISION)
@@ -635,12 +718,9 @@ def build_arg_parser():
     return parser
 
 
-def parse_args_with_profile(argv=None):
-    # peek at --profile first, then make that profile's values the argparse defaults
-    # so every knob the user didn't pass comes from the profile (explicit cli flags
-    # still win). smol135m's values equal the module globals, so the default path is
-    # byte-identical to before. the nested "vllm" block is not an arg, so skip it.
-    parser = build_arg_parser()
+def parse_args_with_profile(argv=None, parser=None):
+    # Peek at --profile, then apply that profile's defaults before the final parse.
+    parser = parser or build_arg_parser()
     pre, _ = parser.parse_known_args(argv)
     overrides = {k: v for k, v in PROFILES[pre.profile].items() if k != "vllm"}
     parser.set_defaults(**overrides)
@@ -657,7 +737,10 @@ def run_training(args):
     train_examples, _held_out = load_gsm8k_splits(
         seed=GSM8K_SEED, held_out=GSM8K_HELD_OUT, train_target=args.train_target,
     )
-    model, tokenizer = build_model_and_tokenizer(args.model_name, args.revision, device)
+    model, tokenizer = build_model_and_tokenizer(
+        args.model_name, args.revision, device, args.quantization,
+        args.lora_rank, args.lora_alpha, args.lora_dropout,
+    )
     # build the vllm engine after the hf model is on gpu but before the optimizer, so
     # vllm profiles its kv cache against a near-empty device and reserves its footprint
     # before adamw state grows into the rest.

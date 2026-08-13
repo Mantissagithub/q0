@@ -1,0 +1,109 @@
+dataset,split,count,method,metric,value,source,status
+Q0 mixture,training,,q0_k1,fit_loss,0.6394162774085999,runs/q0_qwen1_5b_laptop/mixture_weights.json,available
+Q0 mixture,training,,q0_k2,fit_loss,0.6394162774085999,runs/q0_qwen1_5b_laptop/mixture_weights.json,available
+Q0 mixture,training,,q0_k3,fit_loss,0.6394162774085999,runs/q0_qwen1_5b_laptop/mixture_weights.json,available
+Q0 mixture,training,,q0_k4,fit_loss,0.6394162774085999,runs/q0_qwen1_5b_laptop/mixture_weights.json,available
+Q0 mixture,training,,q0_k8,fit_loss,0.6394162774085999,runs/q0_qwen1_5b_laptop/mixture_weights.json,available
+training,steps,256,mopd_t1,loss,0.001142724882811308,runs/mopd_qwen1_5b_laptop/training_metrics.jsonl,available
+training,steps,256,mopd_t1,lr,0.0,runs/mopd_qwen1_5b_laptop/training_metrics.jsonl,available
+training,steps,256,mopd_t1,avg_response_length,74.0,runs/mopd_qwen1_5b_laptop/training_metrics.jsonl,available
+training,steps,256,mopd_t1,completion_tokens,64036,runs/mopd_qwen1_5b_laptop/training_metrics.jsonl,available
+training,steps,256,mopd_t2,loss,0.005995852407068014,runs/mopd_qwen1_5b_laptop_t2/training_metrics.jsonl,available
+training,steps,256,mopd_t2,lr,0.0,runs/mopd_qwen1_5b_laptop_t2/training_metrics.jsonl,available
+training,steps,256,mopd_t2,avg_response_length,66.0,runs/mopd_qwen1_5b_laptop_t2/training_metrics.jsonl,available
+training,steps,256,mopd_t2,completion_tokens,64584,runs/mopd_qwen1_5b_laptop_t2/training_metrics.jsonl,available
+GSM8K,train_val_slice,256,MOPD t=1,pass_at_1,0.4560546875,runs/mopd_qwen1_5b_laptop/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=1,pass_at_4,0.7315290178571427,runs/mopd_qwen1_5b_laptop/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=1,pass_at_8,0.828125,runs/mopd_qwen1_5b_laptop/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=1,parse_at_1,0.94140625,runs/mopd_qwen1_5b_laptop/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=1,parse_at_4,0.9994977678571428,runs/mopd_qwen1_5b_laptop/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=1,parse_at_8,1.0,runs/mopd_qwen1_5b_laptop/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=1,pass_at_1,0.4384765625,runs/mopd_qwen1_5b_laptop/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=1,pass_at_4,0.7276785714285712,runs/mopd_qwen1_5b_laptop/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=1,pass_at_8,0.82421875,runs/mopd_qwen1_5b_laptop/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=1,parse_at_1,0.94091796875,runs/mopd_qwen1_5b_laptop/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=1,parse_at_4,0.9988281250000002,runs/mopd_qwen1_5b_laptop/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=1,parse_at_8,1.0,runs/mopd_qwen1_5b_laptop/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=1,pass_at_1,0.451171875,runs/mopd_qwen1_5b_laptop/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=1,pass_at_4,0.7311941964285715,runs/mopd_qwen1_5b_laptop/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=1,pass_at_8,0.8203125,runs/mopd_qwen1_5b_laptop/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=1,parse_at_1,0.94970703125,runs/mopd_qwen1_5b_laptop/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=1,parse_at_4,0.9983816964285714,runs/mopd_qwen1_5b_laptop/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=1,parse_at_8,1.0,runs/mopd_qwen1_5b_laptop/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=1,pass_at_1,0.443359375,runs/mopd_qwen1_5b_laptop/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=1,pass_at_4,0.7246093749999996,runs/mopd_qwen1_5b_laptop/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=1,pass_at_8,0.81640625,runs/mopd_qwen1_5b_laptop/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=1,parse_at_1,0.93994140625,runs/mopd_qwen1_5b_laptop/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=1,parse_at_4,0.9978236607142857,runs/mopd_qwen1_5b_laptop/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=1,parse_at_8,1.0,runs/mopd_qwen1_5b_laptop/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=2,pass_at_1,0.494140625,runs/mopd_qwen1_5b_laptop_t2/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=2,pass_at_4,0.7598214285714286,runs/mopd_qwen1_5b_laptop_t2/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=2,pass_at_8,0.83984375,runs/mopd_qwen1_5b_laptop_t2/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=2,parse_at_1,0.9482421875,runs/mopd_qwen1_5b_laptop_t2/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=2,parse_at_4,0.9991071428571427,runs/mopd_qwen1_5b_laptop_t2/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=2,parse_at_8,1.0,runs/mopd_qwen1_5b_laptop_t2/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=2,pass_at_1,0.48388671875,runs/mopd_qwen1_5b_laptop_t2/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=2,pass_at_4,0.7521205357142853,runs/mopd_qwen1_5b_laptop_t2/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=2,pass_at_8,0.83203125,runs/mopd_qwen1_5b_laptop_t2/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=2,parse_at_1,0.94189453125,runs/mopd_qwen1_5b_laptop_t2/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=2,parse_at_4,0.9988839285714285,runs/mopd_qwen1_5b_laptop_t2/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=2,parse_at_8,1.0,runs/mopd_qwen1_5b_laptop_t2/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=2,pass_at_1,0.49072265625,runs/mopd_qwen1_5b_laptop_t2/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=2,pass_at_4,0.7628906249999997,runs/mopd_qwen1_5b_laptop_t2/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=2,pass_at_8,0.84765625,runs/mopd_qwen1_5b_laptop_t2/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=2,parse_at_1,0.9423828125,runs/mopd_qwen1_5b_laptop_t2/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=2,parse_at_4,0.9898995535714287,runs/mopd_qwen1_5b_laptop_t2/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=2,parse_at_8,0.9921875,runs/mopd_qwen1_5b_laptop_t2/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=2,pass_at_1,0.49072265625,runs/mopd_qwen1_5b_laptop_t2/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=2,pass_at_4,0.748828125,runs/mopd_qwen1_5b_laptop_t2/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=2,pass_at_8,0.8359375,runs/mopd_qwen1_5b_laptop_t2/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=2,parse_at_1,0.943359375,runs/mopd_qwen1_5b_laptop_t2/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=2,parse_at_4,0.9977120535714286,runs/mopd_qwen1_5b_laptop_t2/validation_results.json,available
+GSM8K,train_val_slice,256,MOPD t=2,parse_at_8,1.0,runs/mopd_qwen1_5b_laptop_t2/validation_results.json,available
+GSM8K,train_val_slice,256,baseline_grpo,pass_at_1,0.29541015625,experiments/q0_mopd/results/passk_baseline_grpo_gsm8kval.json,available
+GSM8K,train_val_slice,256,baseline_grpo,pass_at_4,0.5583705357142857,experiments/q0_mopd/results/passk_baseline_grpo_gsm8kval.json,available
+GSM8K,train_val_slice,256,baseline_grpo,pass_at_8,0.671875,experiments/q0_mopd/results/passk_baseline_grpo_gsm8kval.json,available
+GSM8K,train_val_slice,256,baseline_grpo,parse_at_1,0.60595703125,experiments/q0_mopd/results/passk_baseline_grpo_gsm8kval.json,available
+GSM8K,train_val_slice,256,baseline_grpo,parse_at_4,0.9207589285714284,experiments/q0_mopd/results/passk_baseline_grpo_gsm8kval.json,available
+GSM8K,train_val_slice,256,baseline_grpo,parse_at_8,0.98046875,experiments/q0_mopd/results/passk_baseline_grpo_gsm8kval.json,available
+GSM8K,train_val_slice,256,q0_k1,pass_at_1,0.56640625,experiments/q0_mopd/results/passk_q0_k1_gsm8kval.json,available
+GSM8K,train_val_slice,256,q0_k1,pass_at_4,0.8089843749999998,experiments/q0_mopd/results/passk_q0_k1_gsm8kval.json,available
+GSM8K,train_val_slice,256,q0_k1,pass_at_8,0.875,experiments/q0_mopd/results/passk_q0_k1_gsm8kval.json,available
+GSM8K,train_val_slice,256,q0_k1,parse_at_1,0.99365234375,experiments/q0_mopd/results/passk_q0_k1_gsm8kval.json,available
+GSM8K,train_val_slice,256,q0_k1,parse_at_4,0.9991629464285714,experiments/q0_mopd/results/passk_q0_k1_gsm8kval.json,available
+GSM8K,train_val_slice,256,q0_k1,parse_at_8,1.0,experiments/q0_mopd/results/passk_q0_k1_gsm8kval.json,available
+GSM8K,train_val_slice,256,q0_k2,pass_at_1,0.5849609375,experiments/q0_mopd/results/passk_q0_k2_gsm8kval.json,available
+GSM8K,train_val_slice,256,q0_k2,pass_at_4,0.7996651785714286,experiments/q0_mopd/results/passk_q0_k2_gsm8kval.json,available
+GSM8K,train_val_slice,256,q0_k2,pass_at_8,0.85546875,experiments/q0_mopd/results/passk_q0_k2_gsm8kval.json,available
+GSM8K,train_val_slice,256,q0_k2,parse_at_1,0.99609375,experiments/q0_mopd/results/passk_q0_k2_gsm8kval.json,available
+GSM8K,train_val_slice,256,q0_k2,parse_at_4,1.0,experiments/q0_mopd/results/passk_q0_k2_gsm8kval.json,available
+GSM8K,train_val_slice,256,q0_k2,parse_at_8,1.0,experiments/q0_mopd/results/passk_q0_k2_gsm8kval.json,available
+GSM8K,train_val_slice,256,q0_k3,pass_at_1,0.5947265625,experiments/q0_mopd/results/passk_q0_k3_gsm8kval.json,available
+GSM8K,train_val_slice,256,q0_k3,pass_at_4,0.8232142857142855,experiments/q0_mopd/results/passk_q0_k3_gsm8kval.json,available
+GSM8K,train_val_slice,256,q0_k3,pass_at_8,0.8828125,experiments/q0_mopd/results/passk_q0_k3_gsm8kval.json,available
+GSM8K,train_val_slice,256,q0_k3,parse_at_1,0.99462890625,experiments/q0_mopd/results/passk_q0_k3_gsm8kval.json,available
+GSM8K,train_val_slice,256,q0_k3,parse_at_4,1.0,experiments/q0_mopd/results/passk_q0_k3_gsm8kval.json,available
+GSM8K,train_val_slice,256,q0_k3,parse_at_8,1.0,experiments/q0_mopd/results/passk_q0_k3_gsm8kval.json,available
+GSM8K,train_val_slice,256,mopd_t1,best_pass_at_8,0.828125,validation_results.json,available
+GSM8K,train_val_slice,256,mopd_t1,best_pass_at_4,0.7315290178571427,validation_results.json,available
+GSM8K,train_val_slice,256,mopd_t2,best_pass_at_8,0.84765625,validation_results.json,available
+GSM8K,train_val_slice,256,mopd_t2,best_pass_at_4,0.7628906249999997,validation_results.json,available
+MATH-500,test,500,baseline_grpo,accuracy_single_pass_historical,0.01,math500_results.json,available
+MATH-500,test,500,baseline_grpo,parse_rate_single_pass_historical,0.83,math500_results.json,available
+MATH-500,test,500,q0_best_single,accuracy_single_pass_historical,0.01,math500_results.json,available
+MATH-500,test,500,q0_best_single,parse_rate_single_pass_historical,0.856,math500_results.json,available
+MATH-500,test,500,q0_learned_top4,accuracy_single_pass_historical,0.012,math500_results.json,available
+MATH-500,test,500,q0_learned_top4,parse_rate_single_pass_historical,0.826,math500_results.json,available
+MATH-500,test,500,mopd,accuracy_single_pass_historical,0.012,math500_results.json,available
+MATH-500,test,500,mopd,parse_rate_single_pass_historical,0.866,math500_results.json,available
+MATH-500,test,500,Baseline GRPO,pass_at_4,0.25,passk_baseline_math500.json,available
+MATH-500,test,500,q0 top-2,pass_at_4,0.39,passk_q0_best_math500.json,available
+MATH-500,test,500,MOPD t=2,pass_at_4,0.35,passk_mopd_best_math500.json,available
+MATH-500,test,500,mopd_t2,pass_at_4,0.35,passk_mopd_best_math500.json,available
+MATH-500,test,500,baseline_grpo,pass_at_1,0.1065,passk result,available
+MATH-500,test,500,baseline_grpo,pass_at_4,0.25,passk result,available
+MATH-500,test,500,q0,pass_at_1,0.1555,passk result,available
+MATH-500,test,500,q0,pass_at_4,0.39,passk result,available
+MATH-500,test,500,mopd,pass_at_1,0.164,passk result,available
+MATH-500,test,500,mopd,pass_at_4,0.35,passk result,available
+GSM8K,test,1319,baseline_grpo,pass_at_1,0.26070887035633056,passk_baseline_gsm8k.json,available

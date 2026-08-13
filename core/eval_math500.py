@@ -242,16 +242,13 @@ def load_top4(q0_run_dir):
 
 
 def validate_inputs(args):
-    paths = {
-        "baseline_grpo": args.baseline_checkpoint,
-        "q0_best_single": args.q0_checkpoint,
-        "mopd": args.mopd_checkpoint,
-    }
-    missing = [path for path in paths.values() if not os.path.isfile(path)]
-    if missing:
-        raise ValueError(f"missing checkpoints: {missing}")
-    top4_paths, top4_weights = load_top4(args.q0_run_dir)
-    return paths, top4_paths, top4_weights
+    if not args.manifest:
+        raise ValueError("--manifest is required for final MATH-500 evaluation")
+    _payload, systems, manifest_sha256 = ev.load_final_manifest(
+        args.manifest, args.model_name, args.revision,
+    )
+    paths = {name: spec["path"] for name, spec in systems.items() if spec["type"] == "single"}
+    return paths, systems["q0_learned_top4"]["paths"], systems["q0_learned_top4"]["weights"], manifest_sha256
 
 
 def save_progress(args, metadata, results, predictions):
@@ -262,7 +259,7 @@ def save_progress(args, metadata, results, predictions):
 def run_eval(args):
     if args.device != "cuda" or not torch.cuda.is_available():
         raise ValueError("the math-500 run requires cuda")
-    paths, top4_paths, top4_weights = validate_inputs(args)
+    paths, top4_paths, top4_weights, manifest_sha256 = validate_inputs(args)
     examples = load_math500()
     tokenizer = tg.load_tokenizer(args.model_name, args.revision)
     metadata = {
@@ -275,6 +272,7 @@ def run_eval(args):
         "batch_size": args.batch_size,
         "max_new_tokens": args.max_new_tokens,
         "scorer": "math-verify 0.9.0 symbolic equivalence",
+        "manifest_sha256": manifest_sha256,
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     }
     results = {}
@@ -335,10 +333,11 @@ def build_arg_parser():
     parser = argparse.ArgumentParser(description="evaluate the final systems on math-500")
     parser.add_argument("--model-name", default=tg.MODEL_NAME)
     parser.add_argument("--revision", default=tg.MODEL_REVISION)
-    parser.add_argument("--baseline-checkpoint", default="runs/grpo_baseline/pass_04.pt")
-    parser.add_argument("--q0-checkpoint", default="runs/q0_grpo/traj1_cycle01.pt")
-    parser.add_argument("--q0-run-dir", default="runs/q0_grpo")
-    parser.add_argument("--mopd-checkpoint", default="runs/mopd/opsd.pt")
+    parser.add_argument("--manifest", required=False, help="frozen final-system manifest")
+    parser.add_argument("--baseline-checkpoint", default=None, help=argparse.SUPPRESS)
+    parser.add_argument("--q0-checkpoint", default=None, help=argparse.SUPPRESS)
+    parser.add_argument("--q0-run-dir", default=None, help=argparse.SUPPRESS)
+    parser.add_argument("--mopd-checkpoint", default=None, help=argparse.SUPPRESS)
     parser.add_argument("--output", default="math500_results.json")
     parser.add_argument("--predictions", default="math500_predictions.jsonl")
     parser.add_argument("--batch-size", type=int, default=BATCH_SIZE)

@@ -1,0 +1,25 @@
+{
+  "name": "baseline_grpo",
+  "model": {
+    "hf_repo": "Pradheep1647/q0-gsm8k-1_5b-grpo"
+  },
+  "dataset_meta": {
+    "dataset": "HuggingFaceH4/MATH-500",
+    "revision": "6e4ed1a2a79af7d8630a6b768ec859cb5af4d3be",
+    "split": "test",
+    "count": 500
+  },
+  "requested_k": 4,
+  "result": {
+    "pass_at_1": 0.1065,
+    "pass_at_4": 0.25,
+    "parse_at_1": 0.992,
+    "parse_at_4": 1.0,
+    "samples_per_problem": 4,
+    "timing_seconds": 1682.873762845993,
+    "peak_memory_bytes": 3774428672,
+    "seed": 42,
+    "source": "baseline_grpo"
+  },
+  "timestamp": "2026-08-12T18:24:42Z"
+}

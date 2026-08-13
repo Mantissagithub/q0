@@ -1,4 +1,6 @@
 import argparse
+import gc
+import hashlib
 import json
 import math
 import os
@@ -18,6 +20,9 @@ import train_grpo as tg
 # for a real run: pip install torch transformers datasets accelerate
 
 TRAJECTORY_SEEDS = [42, 4242]
+# local laptop profile: one initialization and at most five release snapshots.
+LOCAL_TRAJECTORY_SEEDS = [42]
+MAX_SNAPSHOTS_PER_TRAJECTORY = 5
 # full-run cycles_per_trajectory = 8
 CYCLES_PER_TRAJECTORY = 4
 
@@ -56,7 +61,7 @@ def top_k_mixtures(snapshot_paths, weights):
 
     ranked_indices = sorted(range(len(weights)), key=lambda index: (-weights[index], index))
     mixtures = {}
-    for k in (1, 2, 4, 8):
+    for k in (1, 2, 3, 4, 8):
         selected_indices = ranked_indices[:min(k, len(ranked_indices))]
         selected_weights = [weights[index] for index in selected_indices]
         selected_total = sum(selected_weights)
@@ -117,7 +122,10 @@ def perturb_weights(model, scale, seed):
     rng.manual_seed(seed)
     with torch.no_grad():
         for p in model.parameters():
-            if p.numel() > 1:
+            # only perturb trainable params. under QLoRA the frozen base is packed
+            # 4-bit (Params4bit); adding gaussian noise to it corrupts the base
+            # weights, so restrict perturbation to the LoRA adapter.
+            if p.numel() > 1 and p.requires_grad:
                 std = p.detach().float().std().cpu()
                 noise = torch.randn(p.shape, generator=rng, dtype=torch.float32) * (std * scale)
                 p.add_(noise.to(device=p.device, dtype=p.dtype))
@@ -143,7 +151,10 @@ def forward_kl_on_completions(student_model, teacher_model, input_ids, attention
 
 
 def build_teacher(args, device, snapshot_path):
-    model = tg.load_model_from_checkpoint(args.model_name, args.revision, snapshot_path, device)
+    model = tg.load_model_from_checkpoint(
+        args.model_name, args.revision, snapshot_path, device,
+        args.quantization, args.lora_rank, args.lora_alpha, args.lora_dropout,
+    )
     model.eval()
     model.requires_grad_(False)
     return model
@@ -212,7 +223,9 @@ def q0_contract(args):
     contract = tg.immutable_training_contract(args)
     contract.update({
         "cycles": args.cycles,
-        "trajectory_seeds": TRAJECTORY_SEEDS,
+        "trajectory_seeds": list(args.trajectory_seeds),
+        "num_initializations": args.num_initializations,
+        "max_snapshots_per_trajectory": args.max_snapshots,
         "distill_warmup_cycles": DISTILL_WARMUP_CYCLES,
         "distill_alpha": DISTILL_ALPHA,
         "distill_temperature": DISTILL_TEMPERATURE,
@@ -233,11 +246,22 @@ def validate_q0_contract(args, cuda_available):
     tg.validate_immutable_training_contract(args, cuda_available)
     if args.cycles != CYCLES_PER_TRAJECTORY:
         raise ValueError(f"cycles must be {CYCLES_PER_TRAJECTORY}")
+    if args.num_initializations != len(args.trajectory_seeds):
+        raise ValueError("num_initializations must match the number of trajectory seeds")
+    if args.num_initializations != 1:
+        raise ValueError("the local q0 workflow supports exactly one initialization")
+    if args.max_snapshots > MAX_SNAPSHOTS_PER_TRAJECTORY:
+        raise ValueError(f"max_snapshots must be <= {MAX_SNAPSHOTS_PER_TRAJECTORY}")
+    if args.max_snapshots < args.cycles:
+        raise ValueError("max_snapshots must cover every completed cycle")
 
 
 def run_trajectory(traj_idx, seed, args, train_examples, run_dir, device):
     tg.set_seed(seed)
-    model, tokenizer = tg.build_model_and_tokenizer(args.model_name, args.revision, device)
+    model, tokenizer = tg.build_model_and_tokenizer(
+        args.model_name, args.revision, device, args.quantization,
+        args.lora_rank, args.lora_alpha, args.lora_dropout,
+    )
     optimizer = tg.build_optimizer(model, args.lr, args.weight_decay)
 
     prompts_per_cycle = len(train_examples)
@@ -261,13 +285,15 @@ def run_trajectory(traj_idx, seed, args, train_examples, run_dir, device):
         print(f"trajectory {traj_idx}: resumed from cycle {start_cycle}")
 
     teacher_model = None
-    if start_cycle >= DISTILL_WARMUP_CYCLES and start_cycle > 0:
+    if start_cycle >= DISTILL_WARMUP_CYCLES and start_cycle > 0 and args.quantization != "4bit":
         teacher_path = os.path.join(run_dir, f"traj{traj_idx}_cycle{start_cycle:02d}.pt")
         teacher_model = build_teacher(args, device, teacher_path)
 
     snapshot_paths = [
         os.path.join(run_dir, f"traj{traj_idx}_cycle{c:02d}.pt") for c in range(1, start_cycle + 1)
     ]
+    if len(snapshot_paths) > args.max_snapshots:
+        raise ValueError("resume state references more snapshots than the configured retention limit")
 
     for cycle_idx in range(start_cycle, args.cycles):
         cycle_num = cycle_idx + 1
@@ -342,19 +368,29 @@ def run_trajectory(traj_idx, seed, args, train_examples, run_dir, device):
             )
 
         model.eval()
-        snapshot_state = {k: v.detach().float().cpu() for k, v in model.state_dict().items()}
         snap_path = os.path.join(run_dir, f"traj{traj_idx}_cycle{cycle_num:02d}.pt")
-        tg.atomic_torch_save({k: v.to(torch.bfloat16) for k, v in model.state_dict().items()}, snap_path)
+        if args.quantization == "4bit":
+            tg.save_adapter(model, snap_path)
+        else:
+            tg.atomic_torch_save({k: v.to(torch.bfloat16) for k, v in model.state_dict().items()}, snap_path)
         snapshot_paths.append(snap_path)
+        if len(snapshot_paths) > args.max_snapshots:
+            stale_path = snapshot_paths.pop(0)
+            if stale_path != snap_path and os.path.exists(stale_path):
+                os.unlink(stale_path)
+                print(f"[traj {traj_idx}] pruned stale snapshot -> {stale_path}")
         print(f"[traj {traj_idx}] saved snapshot cycle {cycle_num} -> {snap_path}")
 
-        if cycle_num >= DISTILL_WARMUP_CYCLES:
+        # chain distillation needs a second resident model; on 8 GB VRAM a full-precision
+        # teacher will not co-reside with the quantized student, so the laptop 4-bit
+        # profile runs the cyclic trajectory + mixture prior without the distillation KL.
+        if cycle_num >= DISTILL_WARMUP_CYCLES and args.quantization != "4bit":
             if teacher_model is None:
                 teacher_model = tg.load_base_model(args.model_name, args.revision, device)
                 teacher_model.eval()
                 teacher_model.requires_grad_(False)
             teacher_model.load_state_dict(
-                {k: v.to(device=device, dtype=teacher_model.dtype) for k, v in snapshot_state.items()}
+                {k: v.to(device=device, dtype=teacher_model.dtype) for k, v in model.state_dict().items()}
             )
 
         if cycle_num < args.cycles:
@@ -367,17 +403,33 @@ def run_trajectory(traj_idx, seed, args, train_examples, run_dir, device):
         tg.save_checkpoint(ckpt_path, model, optimizer, tg.capture_rng_state(), counters, q0_contract(args))
         model.train()
 
+    del model, optimizer, teacher_model, tokenizer
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
     return prompts_seen, completions_seen, snapshot_paths
+
+
+def sha256_file(path):
+    digest = hashlib.sha256()
+    with open(path, "rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def fit_mixture_prior(args, snapshot_paths, held_out, run_dir, device):
     tokenizer = tg.load_tokenizer(args.model_name, args.revision)
     all_probs = []
     for path in snapshot_paths:
-        model = tg.load_model_from_checkpoint(args.model_name, args.revision, path, device)
+        model = tg.load_model_from_checkpoint(
+            args.model_name, args.revision, path, device,
+            args.quantization, args.lora_rank, args.lora_alpha, args.lora_dropout,
+        )
         probs = cache_pgt_for_model(model, tokenizer, held_out, device)
         all_probs.append(probs)
         del model
+        gc.collect()
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 
@@ -387,6 +439,14 @@ def fit_mixture_prior(args, snapshot_paths, held_out, run_dir, device):
 
     payload = {
         "snapshot_paths": [os.path.basename(p) for p in snapshot_paths],
+        "snapshot_sha256": {os.path.basename(p): sha256_file(p) for p in snapshot_paths},
+        "fitness_split": {
+            "dataset": tg.GSM8K_DATASET,
+            "seed": tg.GSM8K_SEED,
+            "start": 0,
+            "count": len(held_out),
+            "purpose": "mixture fitting only",
+        },
         "alpha": alpha.tolist(),
         "weights": weights,
         "fit_loss": fit_loss,
@@ -397,19 +457,48 @@ def fit_mixture_prior(args, snapshot_paths, held_out, run_dir, device):
     print(f"saved learned mixture weights to {out_path} (fit_loss={fit_loss:.4f})")
 
 
+def snapshot_paths_for_run(args, run_dir):
+    paths = []
+    for traj_idx in range(1, args.num_initializations + 1):
+        paths.extend(sorted(
+            os.path.join(run_dir, name)
+            for name in os.listdir(run_dir)
+            if name.startswith(f"traj{traj_idx}_cycle") and name.endswith(".pt")
+        ))
+    if not paths:
+        raise ValueError(f"no q0 snapshots found in {run_dir}")
+    if len(paths) > args.num_initializations * args.max_snapshots:
+        raise ValueError("q0 snapshot retention limit exceeded")
+    return paths
+
+
+def run_fitness(args):
+    validate_q0_contract(args, torch.cuda.is_available())
+    run_dir = os.path.join(args.output_dir, args.run_id)
+    if not os.path.isdir(run_dir):
+        raise ValueError(f"missing q0 run directory: {run_dir}")
+    _train_examples, held_out = tg.load_gsm8k_splits(
+        seed=tg.GSM8K_SEED, held_out=tg.GSM8K_HELD_OUT, train_target=args.train_target,
+    )
+    snapshot_paths = snapshot_paths_for_run(args, run_dir)
+    fit_mixture_prior(args, snapshot_paths, held_out, run_dir, args.device)
+
+
 def run_training(args):
     validate_q0_contract(args, torch.cuda.is_available())
     device = args.device
     run_dir = os.path.join(args.output_dir, args.run_id)
     os.makedirs(run_dir, exist_ok=True)
 
-    train_examples, held_out = tg.load_gsm8k_splits(seed=tg.GSM8K_SEED, held_out=tg.GSM8K_HELD_OUT)
+    train_examples, held_out = tg.load_gsm8k_splits(
+        seed=tg.GSM8K_SEED, held_out=tg.GSM8K_HELD_OUT, train_target=args.train_target,
+    )
 
     total_prompts = 0
     total_completions = 0
     all_snapshot_paths = []
 
-    for traj_idx, seed in enumerate(TRAJECTORY_SEEDS, start=1):
+    for traj_idx, seed in enumerate(args.trajectory_seeds, start=1):
         prompts, completions, snapshot_paths = run_trajectory(
             traj_idx, seed, args, train_examples, run_dir, device,
         )
@@ -417,10 +506,13 @@ def run_training(args):
         total_completions += completions
         all_snapshot_paths.extend(snapshot_paths)
 
-    tg.assert_counts(total_prompts, total_completions, EXPECTED_PROMPTS, EXPECTED_COMPLETIONS)
+    expected_prompts = len(args.trajectory_seeds) * args.cycles * args.train_target
+    expected_completions = expected_prompts * args.group_size
+    tg.assert_counts(total_prompts, total_completions, expected_prompts, expected_completions)
     print(f"q0 training complete: {total_prompts} prompts, {total_completions} completions")
 
-    fit_mixture_prior(args, all_snapshot_paths, held_out, run_dir, device)
+    if args.phase == "fitness":
+        fit_mixture_prior(args, all_snapshot_paths, held_out, run_dir, device)
 
 
 def build_arg_parser():
@@ -431,6 +523,10 @@ def build_arg_parser():
     tg.add_common_args(parser)
     parser.add_argument("--run-id", default="q0_grpo")
     parser.add_argument("--cycles", type=int, default=CYCLES_PER_TRAJECTORY)
+    parser.add_argument("--num-initializations", type=int, default=1)
+    parser.add_argument("--trajectory-seeds", type=int, nargs="+", default=LOCAL_TRAJECTORY_SEEDS)
+    parser.add_argument("--max-snapshots", type=int, default=MAX_SNAPSHOTS_PER_TRAJECTORY)
+    parser.add_argument("--phase", choices=["training", "fitness"], default="training")
     return parser
 
 
@@ -467,6 +563,8 @@ def self_test():
     assert torch.allclose(after_a, after_b), "perturbation must be deterministic for a fixed seed"
 
     assert TRAJECTORY_SEEDS == [42, 4242]
+    assert LOCAL_TRAJECTORY_SEEDS == [42]
+    assert MAX_SNAPSHOTS_PER_TRAJECTORY == 5
 
     long_reasoning = "reasoning " * 10000
     long_target = build_fitness_target({"answer": f"{long_reasoning}#### 42"})
@@ -480,6 +578,8 @@ def self_test():
         prompt_batch_size=tg.PROMPT_BATCH_SIZE, micro_batch_size=tg.MICRO_BATCH_SIZE,
         lr=tg.PEAK_LR, weight_decay=tg.WEIGHT_DECAY, clip_epsilon=tg.CLIP_EPSILON,
         device="cuda", num_passes=tg.NUM_PASSES, cycles=CYCLES_PER_TRAJECTORY,
+        num_initializations=1, trajectory_seeds=list(LOCAL_TRAJECTORY_SEEDS),
+        max_snapshots=MAX_SNAPSHOTS_PER_TRAJECTORY, phase="training",
     )
     validate_q0_contract(contract_args, cuda_available=True)
     bad_contract_args = argparse.Namespace(**vars(contract_args))
@@ -525,6 +625,7 @@ def self_test():
     top_k = top_k_mixtures(mixture_paths, mixture_weights)
     assert top_k["1"]["snapshot_paths"] == ["b.pt"]
     assert top_k["2"]["snapshot_paths"] == ["b.pt", "c.pt"]
+    assert top_k["3"]["snapshot_paths"] == ["b.pt", "c.pt", "a.pt"]
     assert top_k["4"]["snapshot_paths"] == ["b.pt", "c.pt", "a.pt", "e.pt"]
     assert top_k["8"]["snapshot_paths"] == ["b.pt", "c.pt", "a.pt", "e.pt", "d.pt"]
     assert top_k["2"]["weights"] == [0.5, 0.5]
@@ -557,12 +658,14 @@ def self_test():
 
 
 def main():
-    parser = build_arg_parser()
-    args = parser.parse_args()
+    args = tg.parse_args_with_profile(parser=build_arg_parser())
     if args.self_test:
         self_test()
         return
-    run_training(args)
+    if args.phase == "fitness":
+        run_fitness(args)
+    else:
+        run_training(args)
 
 
 if __name__ == "__main__":

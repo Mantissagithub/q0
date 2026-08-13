@@ -1,0 +1,27 @@
+{
+  "name": "baseline_grpo",
+  "model": {
+    "hf_repo": "Pradheep1647/q0-gsm8k-1_5b-grpo"
+  },
+  "dataset_meta": {
+    "dataset": "openai/gsm8k",
+    "split": "test",
+    "count": 1319
+  },
+  "requested_k": 8,
+  "result": {
+    "pass_at_1": 0.26070887035633056,
+    "pass_at_4": 0.5120329253763685,
+    "pass_at_8": 0.623199393479909,
+    "parse_at_1": 0.5887983320697499,
+    "parse_at_4": 0.9066717210007565,
+    "parse_at_8": 0.9666413949962093,
+    "samples_per_problem": 8,
+    "avg_sample_response_length": 203.29747915087188,
+    "pass_at_k_timing_seconds": 5351.545083522797,
+    "pass_at_k_peak_memory_bytes": 3485728256,
+    "pass_at_k_seed": 42,
+    "pass_at_k_source": "baseline_grpo"
+  },
+  "timestamp": "2026-08-12T17:56:27Z"
+}

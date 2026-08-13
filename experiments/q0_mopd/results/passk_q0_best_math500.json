@@ -1,0 +1,36 @@
+{
+  "name": "q0_mixture_top2",
+  "model": {
+    "mixture_run_dir": "runs/q0_qwen1_5b_laptop",
+    "k": 2,
+    "snapshot_paths": [
+      "traj1_cycle02.pt",
+      "traj1_cycle03.pt"
+    ],
+    "weights": [
+      0.7057143269560205,
+      0.2942856730439795
+    ],
+    "base": "Qwen/Qwen2.5-1.5B-Instruct",
+    "quantization": "4bit"
+  },
+  "dataset_meta": {
+    "dataset": "HuggingFaceH4/MATH-500",
+    "revision": "6e4ed1a2a79af7d8630a6b768ec859cb5af4d3be",
+    "split": "test",
+    "count": 500
+  },
+  "requested_k": 4,
+  "result": {
+    "pass_at_1": 0.1555,
+    "pass_at_4": 0.39,
+    "parse_at_1": 0.9985,
+    "parse_at_4": 1.0,
+    "samples_per_problem": 4,
+    "timing_seconds": 12378.26104259491,
+    "peak_memory_bytes": 4308926464,
+    "seed": 42,
+    "source": "q0_mixture_top2"
+  },
+  "timestamp": "2026-08-12T22:12:29Z"
+}

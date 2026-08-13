@@ -1,0 +1,39 @@
+{
+  "name": "q0_k3",
+  "model": {
+    "mixture_run_dir": "runs/q0_qwen1_5b_laptop",
+    "k": 3,
+    "snapshot_paths": [
+      "traj1_cycle02.pt",
+      "traj1_cycle03.pt",
+      "traj1_cycle04.pt"
+    ],
+    "weights": [
+      0.7052316481851566,
+      0.2940843940823345,
+      0.000683957732508911
+    ],
+    "base": "Qwen/Qwen2.5-1.5B-Instruct",
+    "quantization": "4bit"
+  },
+  "dataset_meta": {
+    "dataset": "openai/gsm8k",
+    "split": "train_val_slice",
+    "count": 256
+  },
+  "requested_k": 8,
+  "result": {
+    "pass_at_1": 0.5947265625,
+    "pass_at_4": 0.8232142857142855,
+    "pass_at_8": 0.8828125,
+    "parse_at_1": 0.99462890625,
+    "parse_at_4": 1.0,
+    "parse_at_8": 1.0,
+    "samples_per_problem": 8,
+    "timing_seconds": 4682.27468919754,
+    "peak_memory_bytes": 7435527680,
+    "seed": 42,
+    "source": "q0_k3"
+  },
+  "timestamp": "2026-08-12T13:38:29Z"
+}
